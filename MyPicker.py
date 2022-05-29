@@ -1,66 +1,83 @@
-from __future__ import print_function
-import binascii
-import struct
+import scipy, scipy.cluster, scipy.misc
 from PIL import Image
 import numpy as np
-import scipy
-import scipy.misc
-import scipy.cluster
-
-
+import binascii
 import json
 import os
 
 cachePath = "cache.json"
 
 
-def make_cacheFile_if_not_exist():
-    # j = {}
+def load_cache() -> dict:
+    """
+    Loads the dictionary from the cache file.
 
+    :return: A dictionary of the caches.
+    """
+    return json.loads(open(cachePath, "r").read())
+
+
+def make_cachefile_if_not_exist() -> None:
+    """
+    Make the cache file if it doesn't exist.
+
+    :return: None
+    """
     if not os.path.isfile(cachePath):
-        with open(cachePath, "w") as f:
-            j = {}
-            f.write(json.dumps(j))
-    # else:
+        open(cachePath, "w").write(json.dumps({}))
 
 
-def cache_exists(path):
-    # return False
+def is_cache_exists(path) -> bool:
+    """
+    Check if the cache file exists.
 
-    r = open(cachePath, "r").read()
-    j = json.loads(r)
+    :param path: Path to an image.
+    :return: True if the cache file exists.
+    """
     try:
-        if j[path]:
+        if load_cache()[path]:
             return True
     except:
         return False
 
 
-def get_color_from_cache(path):
-    r = open(cachePath, "r").read()
-    j = json.loads(r)
-    return j[path]
+def get_color_from_cache(path) -> str:
+    """
+    Get the color from the cache.
+
+    :param path: Path to an image.
+    :return: A hex color string.
+    """
+    return load_cache()[path]
 
 
-def store_color_to_cache(path, color):
-    r = open(cachePath, "r").read()
-    j = json.loads(r)
-    j[path] = color
-    with open(cachePath, "w") as f:
-        f.write(json.dumps(j))
+def store_color_to_cache(path, color) -> None:
+    """
+    Store the color to the cache.
+
+    :param path: Path to an image.
+    :param color: A hex color string.
+    :return: None
+    """
+    json_data = load_cache()
+    json_data[path] = color
+    open(cachePath, "w").write(json.dumps(json_data))
 
 
-NUM_CLUSTERS = 20
+def pick_color(path, NUM_CLUSTERS=7, USE_CACHE=True) -> str:
+    """
+    Pick the main color in an image from its path.
 
+    :param path: Path to an image.
+    :param NUM_CLUSTERS = 7: Number of clusters to use.
+    :param USE_CACHE = True: Whether to use the cache.
 
-def pick_color(path):
-    make_cacheFile_if_not_exist()
-    if cache_exists(path):
-        print("cache exists")
+    :return: A hex color string.
+    """
+    make_cachefile_if_not_exist()
+    if is_cache_exists(path) and USE_CACHE:
         return get_color_from_cache(path)
     else:
-        print("cache not exists")
-        print("generating clusters... may take a while")
         im = Image.open(path)
         im = im.resize((150, 150))  # optional, to reduce time
         ar = np.asarray(im)

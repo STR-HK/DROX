@@ -2,190 +2,53 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from io import BytesIO
-from PIL import Image
-import requests
-import random
 import sys
 import os
 
 from MyPicker import pick_color
 from MyAssets import *
-from MyYt import *
+from MyYoutube import *
+
+from MyQtWidgets import *
+from MyWidgets import *
+from MyThreads import *
+from MyObjects import *
 
 
-class MouseObserver(QObject):
-    pressed = pyqtSignal(QEvent)
-    released = pyqtSignal(QEvent)
-    moved = pyqtSignal(QEvent)
-
-    def __init__(self, window):
-        super().__init__(window)
-        self._window = window
-
-        self.window.installEventFilter(self)
-
-    @property
-    def window(self):
-        return self._window
-
-    def eventFilter(self, obj, event):
-        if self.window is obj:
-            if event.type() == QEvent.MouseButtonPress:
-                self.pressed.emit(event)
-            elif event.type() == QEvent.MouseMove:
-                self.moved.emit(event)
-            elif event.type() == QEvent.MouseButtonRelease:
-                self.released.emit(event)
-        return super().eventFilter(obj, event)
-
-
-class QPushButton(QPushButton):
-    def __init__(self, *args, **kwargs):
-        super(QPushButton, self).__init__(*args, **kwargs)
-        self.setCursor(Qt.PointingHandCursor)
-
-
-class QVBoxLayout(QVBoxLayout):
-    def __init__(self, *args, **kwargs):
-        super(QVBoxLayout, self).__init__(*args, **kwargs)
-        self.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-
-class AppBarTitle(QLabel):
-    def __init__(self, *args, **kwargs):
-        super(QLabel, self).__init__(*args, **kwargs)
-        self.font = QFont("Pretendard", 20)
-        self.setFont(self.font)
-        self.setStyleSheet("font-size: 28px; font-weight: 500; color: black;")
-        self.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-
-
-class NavButton(QPushButton):
-    def __init__(self, *args, **kwargs):
-        super(QPushButton, self).__init__(*args, **kwargs)
-        self.setCursor(Qt.PointingHandCursor)
-
-        self.setStyleSheet(
-            """
-            background-color: #fafafa;
-            border: 1px solid transparent;
-            border-radius: 5px;
-            padding: 5px;
-            font-size: 14px;
-            font-weight: 500;
-            color: black;
-            margin: 5px;
-            """
-        )
-
-        self.inverted = False
-
-    def setIcon(self, icon):
-        if not hasattr(self, "icon_"):
-            self.icon_ = icon
-        super(QPushButton, self).setIcon(icon)
-
-    def setInvertIcon(self, invert):
-        self.invert = invert
-
-    def invertIcon(self):
-        if hasattr(self, "invert"):
-            if self.inverted == False:
-                self.setIcon(self.invert)
-                self.inverted = True
-            else:
-                self.setIcon(self.icon_)
-                self.inverted = False
-        else:
-            print("No invert icon")
-
-
-class LazyIcon(QThread):
-    repaint = pyqtSignal()
-    setResultListIcon = pyqtSignal(QListWidgetItem, QIcon)
-
-    def __init__(self, list, item, url):
-        super().__init__()
-        self.list = list
-        self.item = item
-        self.url = url
-
-    def run(self):
-        r = requests.get(self.url)
-        self.edit(r.content)
-
-    def edit(self, content):
-        try:
-            thumbImg = Image.open(BytesIO(content))
-            thumbImg = thumbImg.convert("RGBA")
-            thumbImg = thumbImg.crop(
-                (
-                    int((thumbImg.width - thumbImg.height) / 2),
-                    0,
-                    int((thumbImg.width - thumbImg.height) / 2) + thumbImg.height,
-                    thumbImg.height,
-                )
-            )
-
-            imgByte = BytesIO()
-            thumbImg.save(imgByte, format="PNG")
-            qpix = QPixmap()
-            qpix.loadFromData(imgByte.getvalue())
-            # self.item.setIcon(QIcon(qpix))
-            self.setResultListIcon.emit(self.item, QIcon(qpix))
-
-            self.repaint.emit()
-        except Exception as e:
-            print(e)
-
-    def apply(self, content):
-        pix = QPixmap()
-        pix.loadFromData(content)
-        self.item.setIcon(QIcon(pix))
-
-
-class AppBar(QHBoxLayout):
-    def __init__(self, *args, **kwargs):
-        super(QHBoxLayout, self).__init__(*args, **kwargs)
-
-        self.setContentsMargins(7, 7, 7, 7)
-
-
-class DroxMain(QWidget):
+class DroxWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        # self.setWindowFlags(
-        #     Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint
-        # )
+        self.setWindowFlags(
+            Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint
+        )
+        # self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         # self.setAttribute(Qt.WA_TranslucentBackground)
 
-        self.initUI()
-        self.initLayout()
+        self.ui_init_window()
+        self.ui_init_vars()
+        self.ui_init_layouts()
 
-    def initUI(self):
+    def ui_init_window(self):
         open("terminate.txt", "w").write("0")
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.timer_terminate)
+        self.timer.timeout.connect(self.ui_terminate)
         self.timer.start(500)
 
         x, y = open("pos.txt", "r").read().split(", ")
-        w, h = open("size.txt", "r").read().split(", ")
         self.move(int(x), int(y))
-        self.resize(int(w), int(h))
 
-        # self.setWindowTitle("ㅤ")
         self.setWindowTitle("Drox")
         self.setWindowIcon(QIcon("library_music.svg"))
-        # self.resize(480, 680)
-        # self.setFixedSize(480, 680)
-        # self.center()
+        width = 360
+        self.window_size = QSize(width, int(width * 18 / 9))
+        self.setFixedSize(self.window_size)
         self.show()
 
+        self.ui_make_round()
+
+    def ui_init_vars(self):
         self.masterLayout = QVBoxLayout()
         self.masterLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.masterLayout)
@@ -204,7 +67,14 @@ class DroxMain(QWidget):
         self.pressing = False
         self.drag = False
 
-    def changeLayout(self, func, layout, button):
+    def ui_make_round(self):
+        radius = 40.0
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(self.rect()), radius, radius)
+        mask = QRegion(path.toFillPolygon().toPolygon())
+        self.setMask(mask)
+
+    def ui_change_layout(self, func, layout, button):
         if self.currentLayout:
             self.layoutData[self.currentLayout].hide()
 
@@ -232,18 +102,12 @@ class DroxMain(QWidget):
         )
         button.invertIcon()
 
-        self.loc_prev.addItem(str(func))
+        self.Qlocation_prev.addItem(str(func))
         self.location_prev.append(func)
 
-    def initLayout(self):
+    def ui_init_layouts(self):
         self.widnowTitleWidget = QWidget()
-        self.widnowTitleWidget.setStyleSheet(
-            """
-            background-color: rgba(0, 0, 0, 0.1);
-
-            
-            """
-        )
+        # self.widnowTitleWidget.setStyleSheet("background-color: rgba(0, 0, 0, 0.1);")
         self.windowTitleLayout = QHBoxLayout()
         self.widnowTitleWidget.setLayout(self.windowTitleLayout)
         self.windowTitleLayout.setContentsMargins(0, 0, 0, 0)
@@ -260,7 +124,7 @@ class DroxMain(QWidget):
 
         self.layoutData = {}
 
-        self.footerLayout = QHBoxLayout()
+        self.footerLayout = QVBoxLayout()
         self.masterBody.addStretch()
         self.masterBody.addLayout(self.footerLayout)
 
@@ -283,25 +147,61 @@ class DroxMain(QWidget):
         self.render_search_header()
         self.render_search_body()
 
-        self.render_loc_viewer()
+        self.render_location_viewer()
 
-        self.changeLayout(
+        self.ui_change_layout(
             self.on_nav_search_clicked, self.layoutSearch, self.nav_search
         )
 
-    # Part of code for reloading the windows
-    def timer_terminate(self):
+    def ui_terminate(self):
         if open("terminate.txt", "r").read() == "1":
-            print("Terminating... ")
-            self.terminate()
+            open("terminate.txt", "w").write("0")
+            os.execl(sys.executable, sys.executable, '"{}"'.format(*sys.argv))
         open("pos.txt", "w").write(f"{self.pos().x()}, {self.pos().y()}")
         open("size.txt", "w").write(f"{self.size().width()}, {self.size().height()}")
 
-    def terminate(self):
-        open("terminate.txt", "w").write("0")
-        os.execl(sys.executable, sys.executable, '"{}"'.format(*sys.argv))
+    def win_minimize(self):
+        self.showMinimized()
 
-    # Reloader code ends
+    def win_maximize(self):
+        if self.isMaximized():
+            self.showNormal()
+            if self.windowTitleRenderMethod == "windows":
+                self.btn_maximize.setIcon(QIcon(I_Maximize))
+            elif self.windowTitleRenderMethod == "macos":
+                pass
+        else:
+            self.showMaximized()
+            if self.windowTitleRenderMethod == "windows":
+                self.btn_maximize.setIcon(QIcon(I_Restore))
+            elif self.windowTitleRenderMethod == "macos":
+                pass
+
+    def win_close(self):
+        self.close()
+
+    def on_nav_main_clicked(self):
+        self.ui_change_layout(self.on_nav_main_clicked, self.layoutMain, self.nav_main)
+
+    def on_nav_search_clicked(self):
+        self.ui_change_layout(
+            self.on_nav_search_clicked, self.layoutSearch, self.nav_search
+        )
+
+    def on_nav_playlist_clicked(self):
+        self.ui_change_layout(
+            self.on_nav_playlist_clicked, self.layoutPlaylist, self.nav_playlist
+        )
+
+    def on_nav_single_clicked(self):
+        self.ui_change_layout(
+            self.on_nav_single_clicked, self.layoutSingle, self.nav_single
+        )
+
+    def on_nav_setting_clicked(self):
+        self.ui_change_layout(
+            self.on_nav_setting_clicked, self.layoutSetting, self.nav_setting
+        )
 
     def render_main_header(self):
         self.mainAppBar = AppBar()
@@ -312,11 +212,11 @@ class DroxMain(QWidget):
 
         # self.mainAppBar.addStretch()
 
-        # self.icon = QLabel()
+        self.icon = QLabel()
         # self.mainAppBar.addWidget(self.icon)
-        # self.icon.setScaledContents(True)
-        # self.icon.setPixmap(QPixmap("Profile.png"))
-        # self.icon.setFixedSize(32, 32)
+        self.icon.setScaledContents(True)
+        self.icon.setPixmap(QPixmap("Profile.png"))
+        self.icon.setFixedSize(32, 32)
 
     def render_main_body(self):
         self.body = QVBoxLayout()
@@ -331,7 +231,7 @@ class DroxMain(QWidget):
                 self,
             ):
                 super().__init__()
-                self.setFixedHeight(int(self.width() / 2.5))
+                self.setFixedHeight(int(self.width() / 3.25))
                 self.setStyleSheet("border: none; border-radius: 5px;")
 
                 self.Layout_M = QVBoxLayout()
@@ -350,7 +250,7 @@ class DroxMain(QWidget):
                 self.SubText = QLabel("SubText")
                 self.Layout_M.addWidget(self.SubText)
                 self.SubText.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                self.SubText.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                self.SubText.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
             def setMainText(self, text):
                 self.MainText.setText(text)
@@ -398,142 +298,67 @@ class DroxMain(QWidget):
         self.singleMenu.Image.clicked.connect(self.on_nav_single_clicked)
         self.menu.addWidget(self.singleMenu)
 
-    def on_nav_main_clicked(self):
-        self.changeLayout(self.on_nav_main_clicked, self.layoutMain, self.nav_main)
-
-    def on_nav_search_clicked(self):
-        self.changeLayout(
-            self.on_nav_search_clicked, self.layoutSearch, self.nav_search
-        )
-
-    def on_nav_playlist_clicked(self):
-        self.changeLayout(
-            self.on_nav_playlist_clicked, self.layoutPlaylist, self.nav_playlist
-        )
-
-    def on_nav_single_clicked(self):
-        self.changeLayout(
-            self.on_nav_single_clicked, self.layoutSingle, self.nav_single
-        )
-
-    def on_nav_setting_clicked(self):
-        self.changeLayout(
-            self.on_nav_setting_clicked, self.layoutSetting, self.nav_setting
-        )
-
-    def btn_minimize_clicked(self):
-        self.showMinimized()
-
-    def btn_maximize_clicked(self):
-        if self.isMaximized():
-            self.showNormal()
-            if self.windowTitleRenderMethod == "windows":
-                self.btn_maximize.setIcon(QIcon(I_Maximize))
-            elif self.windowTitleRenderMethod == "macos":
-                pass
-        else:
-            self.showMaximized()
-            if self.windowTitleRenderMethod == "windows":
-                self.btn_maximize.setIcon(QIcon(I_Restore))
-            elif self.windowTitleRenderMethod == "macos":
-                pass
-
-    def btn_close_clicked(self):
-        self.close()
-
     def render_title(self):
-        self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        # self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.windowTitleLayout.setContentsMargins(30, 15, 30, 15)
 
-        self.windowTItleText = QLabel("Drox Music Player")
+        self.windowTItleText1 = QLabel("09:42")
+        self.windowTItleText2 = QLabel("100%")
+        self.windowTItleText1.setStyleSheet("background-color: 0")
+        self.windowTItleText2.setStyleSheet("background-color: 0")
+        self.windowTitleLayout.addWidget(self.windowTItleText1)
+        self.windowTitleLayout.addStretch()
+        self.windowTitleLayout.addWidget(self.windowTItleText2)
 
         self.windowTitleRenderMethod = "windows"
-        if self.windowTitleRenderMethod == "windows":
+        self.render_traffic_light = False
+        if self.render_traffic_light:
+            if self.windowTitleRenderMethod == "windows":
 
-            self.btn_minimize = QPushButton()
-            self.btn_minimize.setIcon(QIcon(I_Minimize))
-            self.btn_minimize.clicked.connect(self.btn_minimize_clicked)
-            self.btn_maximize = QPushButton()
-            self.btn_maximize.setIcon(QIcon(I_Maximize))
-            self.btn_maximize.clicked.connect(self.btn_maximize_clicked)
-            self.btn_close = QPushButton()
-            self.btn_close.setIcon(QIcon(I_Close))
-            self.btn_close.clicked.connect(self.btn_close_clicked)
+                self.btn_minimize = QPushButton()
+                self.btn_minimize.setIcon(QIcon(I_Minimize))
+                self.btn_minimize.clicked.connect(self.win_minimize)
+                self.btn_maximize = QPushButton()
+                self.btn_maximize.setIcon(QIcon(I_Maximize))
+                self.btn_maximize.clicked.connect(self.win_maximize)
+                self.btn_close = QPushButton()
+                self.btn_close.setIcon(QIcon(I_Close))
+                self.btn_close.clicked.connect(self.win_close)
 
-            self.window_btns = [self.btn_minimize, self.btn_maximize, self.btn_close]
-            for button in self.window_btns:
-                self.windowTitleLayout.addWidget(button)
-                button.setFixedSize(40, 24)
-                button.setIconSize(QSize(14, 14))
-                button.setStyleSheet(
+                self.window_btns = [
+                    self.btn_minimize,
+                    self.btn_maximize,
+                    self.btn_close,
+                ]
+                for button in self.window_btns:
+                    self.windowTitleLayout.addWidget(button)
+                    button.setFixedSize(43, 28)
+                    button.setIconSize(QSize(15, 15))
+                    button.setStyleSheet(
+                        """
+                        QPushButton { background-color: rgba(0, 0, 0, 0.0); border: 0px; }
+                        QPushButton:hover { background-color: rgba(0, 0, 0, 0.1); }
+                        QPushButton:pressed { background-color: rgba(0, 0, 0, 0.2); }
+                        """
+                    )
+            elif self.windowTitleRenderMethod == "macos":
+                self.windowTitleLayout.addWidget(self.windowTItleText)
+                self.windowTItleText.setStyleSheet(
                     """
-                    QPushButton { background-color: rgba(0, 0, 0, 0.0); border: 0px; }
-                    QPushButton:hover { background-color: rgba(0, 0, 0, 0.1); }
-                    QPushButton:pressed { background-color: rgba(0, 0, 0, 0.2); }
+                    QLabel {
+                        color: white;
+                        font-size: 1.2rem;
+                        font-weight: bold;
+                        background-color: rgba(0, 0, 0, 0.0);
+                        border: 0px;
+                    }
                     """
                 )
-        elif self.windowTitleRenderMethod == "macos":
-            self.windowTitleLayout.addWidget(self.windowTItleText)
-            self.windowTItleText.setStyleSheet(
-                """
-                QLabel {
-                    color: white;
-                    font-size: 1.2rem;
-                    font-weight: bold;
-                    background-color: rgba(0, 0, 0, 0.0);
-                    border: 0px;
-                }
-                """
-            )
-
-    def mousePressEvent(self, event):
-        self.start = self.mapToGlobal(event.pos())
-        self.pressing = True
-
-        self.titlePos = self.windowTitleLayout.geometry()
-        left, top, right, bottom = (
-            0,
-            0,
-            self.titlePos.right() + self.titlePos.left(),
-            self.titlePos.bottom() + self.titlePos.top(),
-        )
-        posX, posY = event.pos().x(), event.pos().y()
-
-        print(
-            {
-                "left": left,
-                "top": top,
-                "right": right,
-                "bottom": bottom,
-                "posX": posX,
-                "posY": posY,
-            }
-        )
-
-        if (left < posX < right) and (top < posY < bottom):
-            self.drag = True
-
-    def mouseReleaseEvent(self, QMouseEvent):
-        self.pressing = False
-        self.drag = False
-
-    def mouseMoveEvent(self, event):
-
-        if self.drag:
-            if self.pressing:
-                self.end = self.mapToGlobal(event.pos())
-                self.movement = self.end - self.start
-                self.setGeometry(
-                    self.mapToGlobal(self.movement).x(),
-                    self.mapToGlobal(self.movement).y(),
-                    self.width(),
-                    self.height(),
-                )
-                self.start = self.end
 
     def render_footer(self):
         self.footer = QHBoxLayout()
         self.footerLayout.addLayout(self.footer)
-        self.footer.setContentsMargins(5, 5, 5, 5)
+        self.footer.setContentsMargins(5, 5, 5, 0)
         # self.layout.(self.footer)
 
         self.footer_itemList = []
@@ -573,6 +398,16 @@ class DroxMain(QWidget):
         self.footer.addWidget(self.nav_setting)
         self.nav_setting.clicked.connect(self.on_nav_setting_clicked)
 
+        self.controller = QHBoxLayout()
+        self.footerLayout.addLayout(self.controller)
+
+        self.bar = QPushButton()
+        self.bar.setFixedSize(int(self.width() / 3), 5)
+
+        self.bar.setStyleSheet("background-color: black; border-radius: 5px;")
+        self.bar.clicked.connect(self.win_minimize)
+        self.controller.addWidget(self.bar)
+
     def render_search_header(self):
         self.searchAppBar = AppBar()
         self.layoutSearch.addLayout(self.searchAppBar)
@@ -580,15 +415,7 @@ class DroxMain(QWidget):
         self.searchAppBarText = AppBarTitle("Search")
         self.searchAppBar.addWidget(self.searchAppBarText)
 
-    def setRndBg(self, widget):
-        widget.setStyleSheet(
-            widget.styleSheet()
-            + "background-color: {}".format(
-                "#" + "".join([random.choice("0123456789ABCDEF") for j in range(6)])
-            )
-        )
-
-    def addResult(self, entry):
+    def f_search_add_result(self, entry):
         url = entry["thumbnails"][0]["url"]
         text = entry["title"]
         subtext = entry["channel"]["name"]
@@ -604,15 +431,16 @@ class DroxMain(QWidget):
             item,
             url,
         )
-        thread.repaint.connect(self.if_repaint)
-        thread.setResultListIcon.connect(self.setResultListIcon)
+        thread.repaint.connect(self.f_search_repaint_list)
+        thread.setResultListIcon.connect(self.f_search_item_icon)
         self.threads.append(thread)
         self.threads[-1].start()
 
         vwidget = QWidget()
+        # vwidget.setStyleSheet("background-color: red;")
         vline = QVBoxLayout()
         vwidget.setLayout(vline)
-        vline.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        vline.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         line1cont = QHBoxLayout()
         line1cont.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -621,8 +449,9 @@ class DroxMain(QWidget):
         line2cont.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         line1 = QLabel(text)
+        # line1.setStyleSheet("")
         line1cont.addWidget(line1)
-        line1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        line1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         # line1.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         item.setToolTip(line1.text())
@@ -649,22 +478,18 @@ class DroxMain(QWidget):
         self.searchResult.addItem(item)
         self.searchResult.setItemWidget(item, vwidget)
 
-    def if_repaint(self):
+    def f_search_repaint_list(self):
         if self.searchResult.paintingActive() == False:
-            # print(self.searchResult.paintingActive())
             self.searchResult.repaint()
 
-    def setResultListIcon(self, item, icon):
+    def f_search_item_icon(self, item, icon):
         item.setIcon(icon)
 
-    def call_search_end(self):
-        self.on_search_inputted()
-
-    def addResultByList(self, list: list):
+    def f_search_result_by_list(self, list: list):
         for entry in list:
-            self.addResult(entry)
+            self.f_search_add_result(entry)
 
-    def on_search_inputted(self):
+    def f_on_search_input(self):
         input = self.searchInput.text()
         if input.strip() == "":
             return
@@ -673,12 +498,12 @@ class DroxMain(QWidget):
             self.searchResult.takeItem(0)
 
         self.sr = search_10(input)
-        self.addResultByList(self.sr.result()["result"])
+        self.f_search_result_by_list(self.sr.result()["result"])
 
-    def update_search(self, value):
+    def f_search_update(self, value):
         if value == self.searchResult.verticalScrollBar().maximum():
             self.sr.next()
-            self.addResultByList(self.sr.result()["result"])
+            self.f_search_result_by_list(self.sr.result()["result"])
 
     def render_search_body(self):
         self.searchBody = QVBoxLayout()
@@ -694,27 +519,30 @@ class DroxMain(QWidget):
         self.searchInputLine.addWidget(self.searchInput)
         self.searchInput.setPlaceholderText("Search")
         self.searchInput.setStyleSheet(
-            "border: none; border-radius: 5px; background-color: #EEEEEE; padding: 7.5px;"
+            "border: none; border-radius: 2px; background-color: #EEEEEE; padding: 7.5px;"
         )
         self.searchInput.addAction(QIcon(I_Search), QLineEdit.LeadingPosition)
-        self.searchInput.returnPressed.connect(self.call_search_end)
+        self.searchInput.returnPressed.connect(self.f_on_search_input)
 
-        self.searchButton = QPushButton("")
-        self.searchInputLine.addWidget(self.searchButton)
-        self.searchButton.setIcon(QIcon(I_Search))
-        self.searchButton.setStyleSheet(
-            "border: none; border-radius: 5px; background-color: #EEEEEE; padding: 10px;"
-        )
-        self.searchButton.clicked.connect(self.on_search_inputted)
+        # self.searchButton = QPushButton("")
+        # self.searchInputLine.addWidget(self.searchButton)
+        # self.searchButton.setIcon(QIcon(I_Search))
+        # self.searchButton.setStyleSheet(
+        # "border: none; border-radius: 5px; background-color: #EEEEEE; padding: 10px;"
+        # )
+        # self.searchButton.clicked.connect(self.on_search_input)
 
         self.searchResult = QListWidget()
         # self.searchResult.paintingActive()
         self.searchBody.addWidget(self.searchResult)
-        self.searchResult.verticalScrollBar().valueChanged.connect(self.update_search)
-        self.searchResult.setFixedHeight(500)
+        self.searchResult.verticalScrollBar().valueChanged.connect(self.f_search_update)
+        self.searchResult.setSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+        )
+        # self.searchResult.setFixedHeight(self.height())
 
-        # self.searchResult.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.searchResult.sizePolicy().setVerticalPolicy(QSizePolicy.Expanding)
+        self.searchResult.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.searchResult.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.searchResult.setStyleSheet(
             """
             QListWidget{
@@ -724,7 +552,7 @@ class DroxMain(QWidget):
 
             }
             QListWidget QScrollBar{
-                width: 4px;
+                width: 0px;
                 background: #e4e4e4;
                 border-radius: 5px;
                 margin: 0px;
@@ -750,17 +578,15 @@ class DroxMain(QWidget):
         )
         self.searchResult.setIconSize(QSize(55, 55))
 
-        self.searchButton.click()
+    def render_location_viewer(self):
+        self.Qlocations = QHBoxLayout()
 
-    def render_loc_viewer(self):
-        self.loc = QHBoxLayout()
+        self.Qlocation_prev = QListWidget()
+        self.Qlocations.addWidget(self.Qlocation_prev)
+        self.Qlocation_next = QListWidget()
+        self.Qlocations.addWidget(self.Qlocation_next)
 
-        self.loc_prev = QListWidget()
-        self.loc.addWidget(self.loc_prev)
-        self.loc_next = QListWidget()
-        self.loc.addWidget(self.loc_next)
-
-        self.layoutSetting.addLayout(self.loc)
+        self.layoutSetting.addLayout(self.Qlocations)
 
     def render_playlist_header(self):
         self.playlistAppBar = AppBar()
@@ -776,37 +602,76 @@ class DroxMain(QWidget):
         self.singleAppBarText = AppBarTitle("Single")
         self.singleAppBar.addWidget(self.singleAppBarText)
 
-    def handle_window_released(self, event: QMouseEvent):
+    def e_window_released(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.XButton1:
             try:
-                self.loc_next.addItem(str(self.location_prev[-1]))
+                self.Qlocation_next.addItem(str(self.location_prev[-1]))
                 self.location_next.append(self.location_prev[-1])
-                self.loc_prev.takeItem(self.loc_prev.count() - 1)
+                self.Qlocation_prev.takeItem(self.Qlocation_prev.count() - 1)
                 self.location_prev.pop()
 
                 self.location_prev[-1]()
-                self.loc_prev.takeItem(self.loc_prev.count() - 1)
+                self.Qlocation_prev.takeItem(self.Qlocation_prev.count() - 1)
                 self.location_prev.pop()
             except:
                 pass
         elif event.button() == Qt.MouseButton.XButton2:
             try:
                 self.location_next[-1]()
-                self.loc_next.takeItem(self.loc_next.count() - 1)
+                self.Qlocation_next.takeItem(self.Qlocation_next.count() - 1)
                 self.location_next.pop()
             except:
                 pass
         elif event.button() == Qt.MouseButton.MiddleButton:
             try:
                 pass
-                self.loc_prev.clear()
-                self.loc_next.clear()
                 self.location_prev.clear()
                 self.location_next.clear()
+                self.Qlocation_prev.clear()
+                self.Qlocation_next.clear()
             except:
                 pass
         else:
             pass
+
+    def mousePressEvent(self, event):
+        self.start = self.mapToGlobal(event.pos())
+        self.pressing = True
+
+        self.titlePos = self.windowTitleLayout.geometry()
+        left, top, right, bottom = (
+            0,
+            0,
+            self.titlePos.right() + self.titlePos.left(),
+            self.titlePos.bottom() + self.titlePos.top(),
+        )
+        posX, posY = event.pos().x(), event.pos().y()
+
+        # print
+
+        if (left < posX < right) and (top < posY < bottom):
+            self.drag = True
+
+    def mouseReleaseEvent(self, QMouseEvent):
+        self.pressing = False
+        self.drag = False
+
+    def mouseMoveEvent(self, event):
+
+        if self.drag:
+            if self.pressing:
+                self.end = self.mapToGlobal(event.pos())
+                self.movement = self.end - self.start
+                self.setGeometry(
+                    self.mapToGlobal(self.movement).x(),
+                    self.mapToGlobal(self.movement).y(),
+                    self.width(),
+                    self.height(),
+                )
+                self.start = self.end
+
+    def resizeEvent(self, event):
+        self.ui_make_round()
 
 
 if __name__ == "__main__":
@@ -824,11 +689,11 @@ if __name__ == "__main__":
     # app.setPalette(QPalette.setColor(QPalette.Background, QColor(169, 98, 95)))
     app.setFont(QFont("Pretendard", 10))
 
-    app.setQuitOnLastWindowClosed(False)
+    # app.setQuitOnLastWindowClosed(False)
 
-    ex = DroxMain()
+    dw = DroxWidget()
 
-    mouse_observer = MouseObserver(ex.windowHandle())
-    mouse_observer.released.connect(ex.handle_window_released)
+    mouse_observer = MouseObserver(dw.windowHandle())
+    mouse_observer.released.connect(dw.e_window_released)
 
     sys.exit(app.exec_())

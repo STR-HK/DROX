@@ -21,21 +21,25 @@ prev_size = get_size()
 
 
 while True:
-    size = get_size()
+    try:
+        size = get_size()
 
-    if size != prev_size:
-        prev_size = size
+        if size != prev_size:
+            prev_size = size
 
-        f = open("terminate.txt", "w")
-        f.write("1")
-        f.close()
+            f = open("terminate.txt", "w")
+            f.write("1")
+            f.close()
 
-        print(datetime.now())
+            print(datetime.now())
 
-        # time.sleep(0.5)
+            # time.sleep(0.5)
 
-        # os.system("python ./gui.py")
+            # os.system("python ./gui.py")
 
-        # os.system("python gui.py")
+            # os.system("python gui.py")
 
-    time.sleep(1)
+        time.sleep(0.1)
+    except:
+        print("Error")
+        time.sleep(0.1)
