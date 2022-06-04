@@ -5,29 +5,91 @@ from PyQt5.QtGui import *
 import sys
 import os
 
-from MyPicker import pick_color
+from MyPicker import invert_color, pick_color
 from MyAssets import *
 from MyYoutube import *
 
 from MyQtWidgets import *
-from MyWidgets import *
+from MyWidgets import AppBar, AppBarTitle
 from MyThreads import *
 from MyObjects import *
+from SvgEditor import change_color
+
+ACCENT_COLOR = "#731d2c"
+
+
+class MyPopup(QWidget):
+    def __init__(self, parentPos):
+        QWidget.__init__(self)
+
+        self.setWindowFlags(Qt.WindowType.Popup)
+        self.ui_make_round()
+
+        # print(parentPos)
+        self.setGeometry(parentPos.x() + 20, parentPos.y() + 30, 250, 600)
+        self.setWindowOpacity(0.99)
+
+        palatte = QPalette()
+        palatte.setColor(QPalette.Background, QColor(237, 237, 237))
+        self.setPalette(palatte)
+
+    def resizeEvent(self, event):
+        self.ui_make_round()
+
+    def ui_make_round(self):
+        radius = 15
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(self.rect()), radius, radius)
+        mask = QRegion(path.toFillPolygon().toPolygon())
+        self.setMask(mask)
+
+
+class ScaledLabel(QLabel):
+    def __init__(self, *args, **kwargs):
+        QLabel.__init__(self)
+        self._pixmap = QPixmap(self.pixmap())
+
+    def resizeEvent(self, event):
+        self.setFixedHeight(self.width())
 
 
 class DroxWidget(QWidget):
     def __init__(self):
         super().__init__()
 
+        # self.setWindowFlags(Qt.Window)
+        # self.setWindowFlags(Qt.Widget | Qt.FramelessWindowHint)
+
+        # self.__effect = QGraphicsDropShadowEffect()
+        # self.__effect.setBlurRadius(8.0)
+        # self.__effect.setColor(QColor(0, 0, 0, 127))
+        # self.__effect.setOffset(0.0)
+        # self.setGraphicsEffect(self.__effect)
+
+        """"""
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint
         )
+        """"""
+
+        # self.setWindowFlags(Qt.WindowType.Popup)
         # self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         # self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # effect = QGraphicsDropShadowEffect()
+        # effect.setBlurRadius(1)
+        # self.masterLayout.setG
 
         self.ui_init_window()
         self.ui_init_vars()
         self.ui_init_layouts()
+
+        a = QShortcut(QKeySequence("Ctrl+Q"), self)
+        a.activated.connect(self.ui_teleport)
+
+    def ui_teleport(self):
+        # self.move(QCursor.pos())
+        self.move(0, 0)
 
     def ui_init_window(self):
         open("terminate.txt", "w").write("0")
@@ -40,15 +102,18 @@ class DroxWidget(QWidget):
         self.move(int(x), int(y))
 
         self.setWindowTitle("Drox")
-        self.setWindowIcon(QIcon("library_music.svg"))
+        self.setWindowIcon(QIcon("icon.svg"))
         width = 360
         self.window_size = QSize(width, int(width * 18 / 9))
         self.setFixedSize(self.window_size)
+        # self.resize(self.window_size)
         self.show()
 
         self.ui_make_round()
 
     def ui_init_vars(self):
+        # self.masterWidget = QWidget()
+
         self.masterLayout = QVBoxLayout()
         self.masterLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.masterLayout)
@@ -68,7 +133,8 @@ class DroxWidget(QWidget):
         self.drag = False
 
     def ui_make_round(self):
-        radius = 40.0
+        # return
+        radius = 35
         path = QPainterPath()
         path.addRoundedRect(QRectF(self.rect()), radius, radius)
         mask = QRegion(path.toFillPolygon().toPolygon())
@@ -89,17 +155,17 @@ class DroxWidget(QWidget):
             self.layoutData[layout].show()
 
         if self.prevbutton:
-            self.prevbutton.setStyleSheet(
-                self.prevbutton.styleSheet()
-                + "background-color: #fafafa; color: black;"
-            )
+            # self.prevbutton.setStyleSheet(
+            #     self.prevbutton.styleSheet()
+            #     + "background-color: #fafafa; color: black;"
+            # )
             self.prevbutton.invertIcon()
 
         self.prevbutton = button
 
-        button.setStyleSheet(
-            button.styleSheet() + "background-color: black; color: #fafafa;"
-        )
+        # button.setStyleSheet(
+        #     button.styleSheet() + "background-color: black; color: #fafafa;"
+        # )
         button.invertIcon()
 
         self.Qlocation_prev.addItem(str(func))
@@ -116,6 +182,7 @@ class DroxWidget(QWidget):
         self.masterLayout.addLayout(self.masterBody)
 
         self.layouts = QVBoxLayout()
+        self.layouts.setContentsMargins(0, 0, 0, 0)
         self.currentLayout = None
         self.currentLayoutFrame = None
         self.masterBody.addLayout(self.layouts)
@@ -149,9 +216,11 @@ class DroxWidget(QWidget):
 
         self.render_location_viewer()
 
-        self.ui_change_layout(
-            self.on_nav_search_clicked, self.layoutSearch, self.nav_search
-        )
+        # self.ui_change_layout(
+        #     self.on_nav_search_clicked, self.layoutSearch, self.nav_search
+        # )
+
+        self.ui_change_layout(self.on_nav_main_clicked, self.layoutMain, self.nav_main)
 
     def ui_terminate(self):
         if open("terminate.txt", "r").read() == "1":
@@ -180,25 +249,25 @@ class DroxWidget(QWidget):
     def win_close(self):
         self.close()
 
-    def on_nav_main_clicked(self):
+    def on_nav_main_clicked(self, *args):
         self.ui_change_layout(self.on_nav_main_clicked, self.layoutMain, self.nav_main)
 
-    def on_nav_search_clicked(self):
+    def on_nav_search_clicked(self, *args):
         self.ui_change_layout(
             self.on_nav_search_clicked, self.layoutSearch, self.nav_search
         )
 
-    def on_nav_playlist_clicked(self):
+    def on_nav_playlist_clicked(self, *args):
         self.ui_change_layout(
             self.on_nav_playlist_clicked, self.layoutPlaylist, self.nav_playlist
         )
 
-    def on_nav_single_clicked(self):
+    def on_nav_single_clicked(self, *args):
         self.ui_change_layout(
             self.on_nav_single_clicked, self.layoutSingle, self.nav_single
         )
 
-    def on_nav_setting_clicked(self):
+    def on_nav_setting_clicked(self, *args):
         self.ui_change_layout(
             self.on_nav_setting_clicked, self.layoutSetting, self.nav_setting
         )
@@ -220,7 +289,7 @@ class DroxWidget(QWidget):
 
     def render_main_body(self):
         self.body = QVBoxLayout()
-        self.body.setContentsMargins(5, 5, 5, 5)
+        self.body.setContentsMargins(8, 8, 8, 8)
         self.layoutMain.addLayout(self.body)
 
         self.menu = QHBoxLayout()
@@ -231,14 +300,26 @@ class DroxWidget(QWidget):
                 self,
             ):
                 super().__init__()
-                self.setFixedHeight(int(self.width() / 3.25))
+                self.setContentsMargins(0, 0, 0, 0)
+                # self.setFlat(True)
+                # self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                # self.setFixedHeight(int(self.width()))
                 self.setStyleSheet("border: none; border-radius: 5px;")
+                # self.setStyleSheet("""padding: 0;""")
+                # self.setStyleSheet("border: 1px solid pink;")
+
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
 
                 self.Layout_M = QVBoxLayout()
+                self.Layout_M.setContentsMargins(0, 0, 0, 10)
                 self.setLayout(self.Layout_M)
 
-                self.Image = QPushButton()
-                self.Image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                self.Image = ScaledLabel()
+                self.Image.setStyleSheet("border-radius: 5px;")
+                self.Image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                self.Image.setScaledContents(True)
+                # self.Image.setMinimumHeight(int(self.width()))
+
                 self.Layout_M.addWidget(self.Image)
 
                 self.MainText = QLabel()
@@ -260,21 +341,25 @@ class DroxWidget(QWidget):
 
             def setTextColor(self, color):
                 self.MainText.setStyleSheet(
-                    self.MainText.styleSheet() + "color: {}".format(color)
+                    self.MainText.styleSheet() + "color: {};".format(color)
                 )
                 self.SubText.setStyleSheet(
-                    self.SubText.styleSheet() + "color: {}".format(color)
+                    self.SubText.styleSheet() + "color: {};".format(color)
                 )
 
             def setColor(self, color):
                 self.setStyleSheet(
-                    self.styleSheet() + "background-color: {}".format(color)
+                    self.styleSheet() + "background-color: {};".format(color)
                 )
 
             def setIcon(self, icon):
                 self.Image.setStyleSheet(
-                    self.Image.styleSheet() + "border-image : url({});".format(icon)
+                    self.Image.styleSheet()
+                    + "height: auto; border-image : url({});".format(icon)
                 )
+                # self.Image.setPixmap(QPixmap(icon))
+                self.setColor(pick_color(icon))
+                self.setTextColor(invert_color(pick_color(icon), True))
 
             def setIconColor(self, icon):
                 self.Image.setStyleSheet(
@@ -286,17 +371,26 @@ class DroxWidget(QWidget):
         self.playlistMenu.setMainText("PlayList")
         self.playlistMenu.setSubText("0 playlist")
         self.playlistMenu.setTextColor("white")
-        self.playlistMenu.setIconColor(C_Cover1)
-        self.playlistMenu.Image.clicked.connect(self.on_nav_playlist_clicked)
+        self.playlistMenu.setIcon(C_Winter2)
+        self.playlistMenu.mouseReleaseEvent = self.on_nav_playlist_clicked
         self.menu.addWidget(self.playlistMenu)
 
         self.singleMenu = MenuWidget()
         self.singleMenu.setMainText("Single")
         self.singleMenu.setSubText("0 song")
         self.singleMenu.setTextColor("white")
-        self.singleMenu.setIconColor(C_Cover2)
-        self.singleMenu.Image.clicked.connect(self.on_nav_single_clicked)
+        self.singleMenu.setIcon(C_Winter3)
+        self.singleMenu.mouseReleaseEvent = self.on_nav_single_clicked
         self.menu.addWidget(self.singleMenu)
+
+        # self.dd = QPushButton()
+        # self.dd.clicked.connect(self.doit)
+        # self.menu.addWidget(self.dd)
+
+    def doit(self):
+        print(self.geometry())
+        self.w = MyPopup(self.geometry())
+        self.w.show()
 
     def render_title(self):
         # self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -357,54 +451,166 @@ class DroxWidget(QWidget):
 
     def render_footer(self):
         self.footer = QHBoxLayout()
+        # self.footer.setSty
         self.footerLayout.addLayout(self.footer)
-        self.footer.setContentsMargins(5, 5, 5, 0)
-        # self.layout.(self.footer)
+        self.footer.setContentsMargins(0, 10, 0, 15)
 
         self.footer_itemList = []
 
-        self.nav_main = NavButton("Main")
-        self.nav_main.setIcon(QIcon(I_Home))
-        self.nav_main.setInvertIcon(QIcon(II_Home))
-        self.footer_itemList.append(self.nav_main)
+        class NeuNavButton(QWidget):
+            def __init__(self, *args, **kwargs) -> None:
+                super(QWidget, self).__init__(*args, **kwargs)
+                self.wid = QVBoxLayout()
+
+                self.setContentsMargins(0, 0, 0, 0)
+                self.wid.setContentsMargins(0, 0, 0, 0)
+                self.wid.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+                self.icon = QLabel()
+                self.icon.setFixedHeight(26)
+                self.icon.setAlignment(
+                    Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter
+                )
+                self.icon.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+                # self.icon.setPixmap(QPixmap(I_Home))
+                self.wid.addWidget(self.icon)
+
+                self.btn = QLabel("Default")
+                self.setTextColor("lightgray")
+                self.wid.addWidget(self.btn)
+
+                self.setLayout(self.wid)
+
+                self.setMouseTracking(True)
+                # self.mouseReleaseEvent = self.clicked
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+                self.inverted = False
+
+            def setIcon(self, icon):
+                if not hasattr(self, "icon_"):
+                    self.icon_ = icon
+                    pix = QPixmap()
+                    pix.loadFromData(change_color(self.icon_, "gray"))
+
+                    self.icon.setPixmap(pix)
+
+                # else:
+                else:
+                    self.icon.setPixmap(icon)
+
+            def setText(self, text):
+                self.btn.setText(text)
+
+            def setTextColor(self, color):
+                self.btn.setStyleSheet("font-size: 10px; color: {}".format(color))
+
+            def setInvertIcon(self, invert):
+                self.invert = invert
+
+            def invertIcon(self):
+                if hasattr(self, "invert"):
+                    if self.inverted == False:
+                        pix = QPixmap()
+                        pix.loadFromData(change_color(self.icon_, ACCENT_COLOR))
+                        self.setIcon(pix)
+                        self.inverted = True
+
+                        self.setTextColor(ACCENT_COLOR)
+                    else:
+                        pix = QPixmap()
+                        pix.loadFromData(change_color(self.icon_, "gray"))
+                        self.setIcon(pix)
+                        self.inverted = False
+
+                        self.setTextColor("gray")
+                else:
+                    print("No invert icon")
+
+            def clicked(self, event):
+                print(event)
+
+        self.nav_main = NeuNavButton()
+        self.nav_main.setText("Main")
+        self.nav_main.setIcon(I_Home)
+        self.nav_main.setInvertIcon(II_Home)
         self.footer.addWidget(self.nav_main)
-        self.nav_main.clicked.connect(self.on_nav_main_clicked)
+        self.nav_main.mouseReleaseEvent = self.on_nav_main_clicked
 
-        self.nav_search = NavButton("Search")
-        self.nav_search.setIcon(QIcon(I_Search))
-        self.nav_search.setInvertIcon(QIcon(II_Search))
-        self.footer_itemList.append(self.nav_search)
+        self.nav_search = NeuNavButton()
+        self.nav_search.setText("Search")
+        self.nav_search.setIcon(I_Search)
+        self.nav_search.setInvertIcon(II_Search)
         self.footer.addWidget(self.nav_search)
-        self.nav_search.clicked.connect(self.on_nav_search_clicked)
+        self.nav_search.mouseReleaseEvent = self.on_nav_search_clicked
 
-        self.nav_playlist = NavButton("PlayList")
-        self.nav_playlist.setIcon(QIcon(I_Playlist))
-        self.nav_playlist.setInvertIcon(QIcon(II_Playlist))
-        self.footer_itemList.append(self.nav_playlist)
+        self.nav_playlist = NeuNavButton()
+        self.nav_playlist.setText("Playlist")
+        self.nav_playlist.setIcon(I_Playlist)
+        self.nav_playlist.setInvertIcon(II_Playlist)
         self.footer.addWidget(self.nav_playlist)
-        self.nav_playlist.clicked.connect(self.on_nav_playlist_clicked)
+        self.nav_playlist.mouseReleaseEvent = self.on_nav_playlist_clicked
 
-        self.nav_single = NavButton("Single")
-        self.nav_single.setIcon(QIcon(I_Single))
-        self.nav_single.setInvertIcon(QIcon(II_Single))
-        self.footer_itemList.append(self.nav_single)
+        self.nav_single = NeuNavButton()
+        self.nav_single.setText("Single")
+        self.nav_single.setIcon(I_Single)
+        self.nav_single.setInvertIcon(II_Single)
         self.footer.addWidget(self.nav_single)
-        self.nav_single.clicked.connect(self.on_nav_single_clicked)
+        self.nav_single.mouseReleaseEvent = self.on_nav_single_clicked
 
-        self.nav_setting = NavButton("Setting")
-        self.nav_setting.setIcon(QIcon(I_Setting))
-        self.nav_setting.setInvertIcon(QIcon(II_Setting))
-        self.footer_itemList.append(self.nav_setting)
+        self.nav_setting = NeuNavButton()
+        self.nav_setting.setText("Setting")
+        self.nav_setting.setIcon(I_Setting)
+        self.nav_setting.setInvertIcon(II_Setting)
         self.footer.addWidget(self.nav_setting)
-        self.nav_setting.clicked.connect(self.on_nav_setting_clicked)
+        self.nav_setting.mouseReleaseEvent = self.on_nav_setting_clicked
+
+        # self.nav_main = NavButton("Main")
+        # self.nav_main.setIcon(QIcon(I_Home))
+        # self.nav_main.setInvertIcon(QIcon(II_Home))
+        # self.footer_itemList.append(self.nav_main)
+        # self.footer.addWidget(self.nav_main)
+        # self.nav_main.clicked.connect(self.on_nav_main_clicked)
+
+        # self.nav_search = NavButton("Search")
+        # self.nav_search.setIcon(QIcon(I_Search))
+        # self.nav_search.setInvertIcon(QIcon(II_Search))
+        # self.footer_itemList.append(self.nav_search)
+        # # self.footer.addWidget(self.nav_search)
+        # self.nav_search.clicked.connect(self.on_nav_search_clicked)
+
+        # self.nav_playlist = NavButton("PlayList")
+        # self.nav_playlist.setIcon(QIcon(I_Playlist))
+        # self.nav_playlist.setInvertIcon(QIcon(II_Playlist))
+        # self.footer_itemList.append(self.nav_playlist)
+        # # self.footer.addWidget(self.nav_playlist)
+        # self.nav_playlist.clicked.connect(self.on_nav_playlist_clicked)
+
+        # self.nav_single = NavButton("Single")
+        # self.nav_single.setIcon(QIcon(I_Single))
+        # self.nav_single.setInvertIcon(QIcon(II_Single))
+        # self.footer_itemList.append(self.nav_single)
+        # # self.footer.addWidget(self.nav_single)
+        # self.nav_single.clicked.connect(self.on_nav_single_clicked)
+
+        # self.nav_setting = NavButton("Setting")
+        # self.nav_setting.setIcon(QIcon(I_Setting))
+        # self.nav_setting.setInvertIcon(QIcon(II_Setting))
+        # self.footer_itemList.append(self.nav_setting)
+        # # self.footer.addWidget(self.nav_setting)
+        # self.nav_setting.clicked.connect(self.on_nav_setting_clicked)
 
         self.controller = QHBoxLayout()
         self.footerLayout.addLayout(self.controller)
+        self.controller.setContentsMargins(0, 0, 0, 10)
 
         self.bar = QPushButton()
-        self.bar.setFixedSize(int(self.width() / 3), 5)
+        self.bar.setCursor(Qt.PointingHandCursor)
+        self.bar.setFixedSize(int(self.width() / 2.5), 15)
 
-        self.bar.setStyleSheet("background-color: black; border-radius: 5px;")
+        self.bar.setStyleSheet(
+            "background-color: black; border: 7px; border-color: transparent; border-style: solid; border-radius: 7px;"
+        )
         self.bar.clicked.connect(self.win_minimize)
         self.controller.addWidget(self.bar)
 
@@ -604,7 +810,9 @@ class DroxWidget(QWidget):
 
     def e_window_released(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.XButton1:
+            print("Left")
             try:
+                print(self.location_prev, self.location_next)
                 self.Qlocation_next.addItem(str(self.location_prev[-1]))
                 self.location_next.append(self.location_prev[-1])
                 self.Qlocation_prev.takeItem(self.Qlocation_prev.count() - 1)
@@ -613,18 +821,19 @@ class DroxWidget(QWidget):
                 self.location_prev[-1]()
                 self.Qlocation_prev.takeItem(self.Qlocation_prev.count() - 1)
                 self.location_prev.pop()
-            except:
-                pass
+                # pass
+            except Exception as e:
+                print(e)
         elif event.button() == Qt.MouseButton.XButton2:
             try:
                 self.location_next[-1]()
                 self.Qlocation_next.takeItem(self.Qlocation_next.count() - 1)
                 self.location_next.pop()
+                # pass
             except:
                 pass
         elif event.button() == Qt.MouseButton.MiddleButton:
             try:
-                pass
                 self.location_prev.clear()
                 self.location_next.clear()
                 self.Qlocation_prev.clear()
@@ -692,6 +901,12 @@ if __name__ == "__main__":
     # app.setQuitOnLastWindowClosed(False)
 
     dw = DroxWidget()
+    # effect = QGraphicsDropShadowEffect()
+    # effect.setBlurRadius(10)
+    # effect.setOffset(0, 0)
+    # # effect.setColor(QColor(0, 0, 0, 100))
+
+    # dw.setGraphicsEffect(effect)
 
     mouse_observer = MouseObserver(dw.windowHandle())
     mouse_observer.released.connect(dw.e_window_released)

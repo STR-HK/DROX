@@ -3,15 +3,27 @@ from PyQt5.QtCore import *
 
 from PyQt5.QtGui import *
 
+# from gui import ACCENT_COLOR
+
+
+class AppBar(QHBoxLayout):
+    def __init__(self, *args, **kwargs):
+        super(QHBoxLayout, self).__init__(*args, **kwargs)
+
+        self.setContentsMargins(7, 0, 7, 0)
+
 
 class AppBarTitle(QLabel):
     def __init__(self, *args, **kwargs):
         super(QLabel, self).__init__(*args, **kwargs)
         self.font = QFont("Pretendard", 20)
         self.setFont(self.font)
-        self.setStyleSheet("font-size: 28px; font-weight: 500; color: black;")
+        self.setStyleSheet(
+            "font-size: 28px; font-weight: 500; color: {};".format("black")
+        )
         self.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.setContentsMargins(0, 0, 0, 5)
 
 
 class NavButton(QPushButton):
@@ -51,10 +63,3 @@ class NavButton(QPushButton):
                 self.inverted = False
         else:
             print("No invert icon")
-
-
-class AppBar(QHBoxLayout):
-    def __init__(self, *args, **kwargs):
-        super(QHBoxLayout, self).__init__(*args, **kwargs)
-
-        self.setContentsMargins(7, 0, 7, 0)

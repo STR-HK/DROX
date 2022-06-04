@@ -95,3 +95,43 @@ def pick_color(path, NUM_CLUSTERS=7, USE_CACHE=True) -> str:
         colour = "#" + colour[0:6]
         store_color_to_cache(path, colour)
         return colour
+
+
+def invert_color(HEX_VALUE, BLACK_WHITE=False):
+    """
+    Invert the color of a hex value.
+
+    :param HEX_VALUE: A hex color string. (e.g. #XXXXXX)
+    :param BLACK_WHITE: Whether to return only black and white.
+    :return: A hex color string. (e.g. #XXXXXX)
+
+    """
+    if HEX_VALUE[0] == "#":
+        HEX_VALUE = HEX_VALUE[1:]
+
+    if len(HEX_VALUE) == 3:
+        HEX_VALUE = (
+            HEX_VALUE[0]
+            + HEX_VALUE[0]
+            + HEX_VALUE[1]
+            + HEX_VALUE[1]
+            + HEX_VALUE[2]
+            + HEX_VALUE[2]
+        )
+
+    r, g, b = (
+        int(HEX_VALUE[0:2], 16),
+        int(HEX_VALUE[2:4], 16),
+        int(HEX_VALUE[4:6], 16),
+    )
+
+    if BLACK_WHITE:
+        if (r * 0.299 + g * 0.587 + b * 0.114) > 186:
+            return "#000000"
+        else:
+            return "#FFFFFF"
+
+    r = str(format(255 - r, "x")).zfill(2)
+    g = str(format(255 - g, "x")).zfill(2)
+    b = str(format(255 - b, "x")).zfill(2)
+    return "#" + r + g + b
