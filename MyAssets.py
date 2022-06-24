@@ -10,9 +10,18 @@ C_Cover2 = P_COVER + "Cover2.png"
 C_Winter = P_COVER + "Winter.jpg"
 C_Winter2 = P_COVER + "Winter2.jpg"
 C_Winter3 = P_COVER + "Winter3.jpg"
+
+C_LovelyWinter = P_COVER + "lovely.jpg"
+C_BlackWinter = P_COVER + "BlackWinter.jpg"
+C_HighteenWinter = P_COVER + "Highteen.jpg"
+C_SparkleWinter = P_COVER + "Sparkle.webp"
+
+
 C_Heoney = P_COVER + "Heoney.jpg"
 C_M60_UCD1 = P_COVER + "M60-UCD1.jpg"
 C_SultangYeeaeyo = P_COVER + "SultangYeeaeyo.jpg"
+C_init = P_COVER + "init.png"
+C_dust = P_COVER + "dust.png"
 
 P_FOOTER = P_ICON_MAIN + "/footer/"
 I_Home = P_FOOTER + "home.svg"
@@ -33,6 +42,17 @@ I_Close = P_WINDOW + "chrome-close.svg"
 I_Minimize = P_WINDOW + "chrome-minimize.svg"
 I_Maximize = P_WINDOW + "chrome-maximize.svg"
 I_Restore = P_WINDOW + "chrome-restore.svg"
+
+P_MACOS = P_ICON + "/macos/"
+I_TR_Close = P_MACOS + "Close_Button.svg"
+I_TR_Close_Active = P_MACOS + "Close_Button_Active.svg"
+I_TR_Close_Hover = P_MACOS + "Close_Button_Hover.svg"
+I_TR_Minimize = P_MACOS + "Minimize_Button.svg"
+I_TR_Minimize_Active = P_MACOS + "Minimize_Button_Active.svg"
+I_TR_Minimize_Hover = P_MACOS + "Minimize_Button_Hover.svg"
+I_TR_Maximize = P_MACOS + "Maximize_Button.svg"
+I_TR_Maximize_Active = P_MACOS + "Maximize_Button_Active.svg"
+I_TR_Maximize_Hover = P_MACOS + "Maximize_Button_Hover.svg"
 
 
 P_PROFILE = P_ICON_MAIN + "/profile/"

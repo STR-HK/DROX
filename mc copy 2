@@ -1,0 +1,13 @@
+execute as @e[tag=works] at @e[tag=works] unless block ~ ~ ~ minecraft:red_wool run tp ^ ^ ^-1
+
+execute as @e[tag=works] at @e[tag=works] if block ~ ~ ~ minecraft:red_wool run setblock ~-1 ~ ~ minecraft:blue_wool
+
+execute as @e[tag=works] at @e[tag=works] if block ~ ~ ~ minecraft:red_wool run tp ~-1 ~ ~
+
+execute as @e[tag=works] at @e[tag=works] if block ~ ~ ~ minecraft:blue_wool run setblock ~-1 ~ ~ minecraft:red_wool
+
+execute as @e[tag=works] at @e[tag=works] if block ~ ~ ~ minecraft:blue_wool run tp @e[tag=works] ~ ~ ~ facing ^ ^ ^-1
+
+execute as @e[tag=works] at @e[tag=works] run setblock ~ ~-1 ~ minecraft:yellow_wool
+
+execute at @e[tag=works] as @e[tag=works] unless block ~ ~ ~ minecraft:command_block unless block ~ ~ ~ minecraft:red_wool unless block ~ ~ ~ minecraft:blue_wool run setblock ~ ~ ~ air destroy
