@@ -16,7 +16,7 @@ class MouseObserver(QObject):
     def window(self):
         return self._window
 
-    def eventFilter(self, obj, event):
+    def eventFilter(self, obj, event: QEvent):
         if self.window is obj:
             if event.type() == QEvent.MouseButtonPress:
                 self.pressed.emit(event)

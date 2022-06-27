@@ -70,6 +70,74 @@ class ContextButton(QPushButton):
         )
 
 
+class WindowContext(QWidget):
+    def __init__(self, mousePos):
+        QWidget.__init__(self)
+
+        self.setContentsMargins(0, 0, 0, 0)
+
+        self.setWindowFlags(Qt.WindowType.Popup)
+        self.setWindowOpacity(0.99)
+        self.ui_make_round()
+
+        palatte = QPalette()
+        palatte.setColor(QPalette.Background, QColor(237, 237, 237))
+        self.setPalette(palatte)
+
+        self.contextLayout = QVBoxLayout()
+        self.contextLayout.setContentsMargins(5, 5, 5, 5)
+        self.setLayout(self.contextLayout)
+
+        self.move = ContextButton("Move")
+        self.contextLayout.addWidget(self.move)
+        self.move.clicked.connect(self.suicide)
+
+        self.size = ContextButton("Size")
+        self.contextLayout.addWidget(self.size)
+        self.size.clicked.connect(self.suicide)
+
+        self.minimize = ContextButton("Minimize")
+        self.contextLayout.addWidget(self.minimize)
+        self.minimize.clicked.connect(self.suicide)
+
+        self.maximize = ContextButton("Maximize")
+        self.contextLayout.addWidget(self.maximize)
+        self.maximize.clicked.connect(self.suicide)
+
+        line = QWidget()
+        line.setFixedHeight(1)
+        line.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        line.setStyleSheet("background-color: lightgray")
+        self.contextLayout.addWidget(line)
+
+        self.close = ContextButton("Close")
+        self.contextLayout.addWidget(self.close)
+        self.close.clicked.connect(self.suicide)
+
+        self.show()
+
+        self.setGeometry(
+            mousePos.x(),
+            mousePos.y(),
+            self.contextLayout.contentsRect().width(),
+            self.contextLayout.contentsRect().height(),
+        )
+
+    def suicide(self):
+        self.hide()
+
+    def resizeEvent(self, event):
+        self.ui_make_round()
+
+    def ui_make_round(self):
+        # return
+        radius = 7
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(self.rect()), radius, radius)
+        mask = QRegion(path.toFillPolygon().toPolygon())
+        self.setMask(mask)
+
+
 class Context(QWidget):
     def __init__(self, mousePos):
         QWidget.__init__(self)
@@ -126,128 +194,11 @@ class Context(QWidget):
         self.setMask(mask)
 
 
-class ExampleContext(Context):
+class ExampleContext(WindowContext):
     def __init__(self, pos):
-        super(Context, self).__init__(pos)
+        super(WindowContext, self).__init__(pos)
         self.first = ContextButton("Carbon Dioxide")
         self.contextLayout.addWidget(self.first)
-
-
-class FramelessObject(QObject):
-    Margins = 3  # 边缘边距
-    TitleHeight = 36  # 标题栏高度
-    Widgets = set()  # 无边框窗口集合
-
-    @classmethod
-    def set_margins(cls, margins):
-        cls.Margins = margins
-
-    @classmethod
-    def set_title_height(cls, height):
-        cls.TitleHeight = height
-
-    @classmethod
-    def add_widget(cls, widget):
-        cls.Widgets.add(widget)
-
-    @classmethod
-    def del_widget(cls, widget):
-        if widget in cls.Widgets:
-            cls.Widgets.remove(widget)
-
-    def _get_edges(self, pos, width, height):
-        """根据坐标获取方向
-        :param pos: QPoint
-        :param width: int
-        :param height: int
-        :return: Qt.Edges
-        """
-        edge = 0
-        x, y = pos.x(), pos.y()
-
-        if y <= self.Margins:
-            edge |= Qt.TopEdge
-        if x <= self.Margins:
-            edge |= Qt.LeftEdge
-        if x >= width - self.Margins:
-            edge |= Qt.RightEdge
-        if y >= height - self.Margins:
-            edge |= Qt.BottomEdge
-
-        return edge
-
-    def _get_cursor(self, edges):
-        """调整鼠标样式
-        :param edges: int or None
-        :return: Qt.CursorShape
-        """
-        if edges == Qt.LeftEdge | Qt.TopEdge or edges == Qt.RightEdge | Qt.BottomEdge:
-            return Qt.SizeFDiagCursor
-        elif edges == Qt.RightEdge | Qt.TopEdge or edges == Qt.LeftEdge | Qt.BottomEdge:
-            return Qt.SizeBDiagCursor
-        elif edges == Qt.LeftEdge or edges == Qt.RightEdge:
-            return Qt.SizeHorCursor
-        elif edges == Qt.TopEdge or edges == Qt.BottomEdge:
-            return Qt.SizeVerCursor
-
-        return Qt.ArrowCursor
-
-    def is_titlebar(self, pos):
-        print(pos)
-        """判断是否是标题栏
-        :param pos: QPoint
-        :return: bool
-        """
-        return pos.y() <= self.TitleHeight
-
-    def moveOrResize(self, window, pos, width, height):
-        print(pos)
-        edges = self._get_edges(pos, width, height)
-        if edges:
-            if window.windowState() == Qt.WindowNoState:
-                window.startSystemResize(edges)
-        else:
-            if self.is_titlebar(pos):
-                window.startSystemMove()
-
-    def eventFilter(self, obj, event):
-        if obj.isWindowType():
-            # top window 处理光标样式
-            # print(event.type())
-            # print(obj.windowState())
-            # print(self.Widgets)
-            # print(event.button())
-            if (
-                event.type() == QEvent.MouseMove
-                and obj.windowState() == Qt.WindowNoState
-            ):
-                obj.setCursor(
-                    self._get_cursor(
-                        self._get_edges(event.pos(), obj.width(), obj.height())
-                    )
-                )
-            elif event.type() == QEvent.TouchUpdate:
-                self.moveOrResize(obj, event.pos(), obj.width(), obj.height())
-        elif (
-            obj in self.Widgets
-            and isinstance(event, QMouseEvent)
-            and event.button() == Qt.LeftButton
-        ):
-            if event.type() == QEvent.MouseButtonDblClick:
-                # 双击最大化还原
-                if self.is_titlebar(event.pos()):
-                    if obj.windowState() == Qt.WindowFullScreen:
-                        pass
-                    elif obj.windowState() == Qt.WindowMaximized:
-                        obj.showNormal()
-                    else:
-                        obj.showMaximized()
-            elif event.type() == QEvent.MouseButtonPress:
-                self.moveOrResize(
-                    obj.windowHandle(), event.pos(), obj.width(), obj.height()
-                )
-
-        return False
 
 
 class DroxWidget(QWidget):
@@ -495,18 +446,13 @@ class DroxWidget(QWidget):
         self.singleMenu.clicked.connect(self.on_nav_single_clicked)
         self.menu.addWidget(self.singleMenu)
 
-        def normal():
+        def normalize():
             self.playlistMenu.setIcon(C_init)
             self.singleMenu.setIcon(C_dust)
 
-        normal()
+        normalize()
 
-    def doit(self):
-        print(self.geometry())
-        self.w = MyPopup(self.geometry())
-        self.w.show()
-
-    def change_title_render_method(self):
+    def fun_change_title_render_method(self):
         if self.windowTitleRenderMethod == "macos":
             self.windowTitleRenderMethod = "windows"
             self.render_title()
@@ -514,23 +460,23 @@ class DroxWidget(QWidget):
             self.windowTitleRenderMethod = "macos"
             self.render_title()
 
+    def context_title(self):
+        pass
+
     def render_title(self):
         # self.windowTitleLayout.setContentsMargins(30, 15, 30, 15)
         # self.windowTitleLayout.setContentsMargins(20, 15, 20, 0) //선 없을 떄
         self.windowTitleLayout.setContentsMargins(20, 15, 20, 5)
         self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        # self.windowTitleLayout.
 
         self.windowTItleText1 = QLabel("09:42")
         self.windowTItleText2 = QLabel("100%")
         self.windowTItleText1.setStyleSheet("background-color: 0")
         self.windowTItleText2.setStyleSheet("background-color: 0")
-        # self.windowTitleLayout.addWidget(self.windowTItleText1)
-        # self.windowTitleLayout.addStretch()
-        # self.windowTitleLayout.addWidget(self.windowTItleText2)
 
         self.render_traffic_light = True
         if self.render_traffic_light:
-
             while self.windowTitleLayout.count():
                 item = self.windowTitleLayout.takeAt(0)
                 widget = item.widget()
@@ -539,9 +485,7 @@ class DroxWidget(QWidget):
                 else:
                     self.clearLayout(item.layout())
 
-            # self.windowTitleRenderMethod = "macos"
             if self.windowTitleRenderMethod == "macos":
-
                 self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
                 def close_hover_enter(event):
@@ -621,10 +565,7 @@ class DroxWidget(QWidget):
                     )
 
                 return
-
-            # self.windowTitleRenderMethod = "windows"
             elif self.windowTitleRenderMethod == "windows":
-
                 self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
                 self.btn_minimize = QPushButton()
@@ -720,7 +661,7 @@ class DroxWidget(QWidget):
         self.searchAppBarText = AppBarTitle("Search")
         self.searchAppBar.addWidget(self.searchAppBarText)
 
-    def f_search_add_result(self, entry):
+    def fun_search_add_result(self, entry):
         url = entry["thumbnails"][0]["url"]
         text = entry["title"]
         subtext = entry["channel"]["name"]
@@ -736,8 +677,8 @@ class DroxWidget(QWidget):
             item,
             url,
         )
-        thread.repaint.connect(self.f_search_repaint_list)
-        thread.setResultListIcon.connect(self.f_search_item_icon)
+        thread.repaint.connect(self.fun_search_repaint_list)
+        thread.setResultListIcon.connect(self.fun_search_item_icon)
         self.threads.append(thread)
         self.threads[-1].start()
 
@@ -783,18 +724,18 @@ class DroxWidget(QWidget):
         self.searchResult.addItem(item)
         self.searchResult.setItemWidget(item, vwidget)
 
-    def f_search_repaint_list(self):
+    def fun_search_repaint_list(self):
         if self.searchResult.paintingActive() == False:
             self.searchResult.repaint()
 
-    def f_search_item_icon(self, item, icon):
+    def fun_search_item_icon(self, item, icon):
         item.setIcon(icon)
 
-    def f_search_result_by_list(self, list: list):
+    def fun_search_result_by_list(self, list: list):
         for entry in list:
-            self.f_search_add_result(entry)
+            self.fun_search_add_result(entry)
 
-    def f_on_search_input(self):
+    def fun_on_search_input(self):
         input = self.searchInput.text()
         if input.strip() == "":
             return
@@ -803,12 +744,12 @@ class DroxWidget(QWidget):
             self.searchResult.takeItem(0)
 
         self.sr = search_10(input)
-        self.f_search_result_by_list(self.sr.result()["result"])
+        self.fun_search_result_by_list(self.sr.result()["result"])
 
-    def f_search_update(self, value):
+    def fun_search_update(self, value):
         if value == self.searchResult.verticalScrollBar().maximum():
             self.sr.next()
-            self.f_search_result_by_list(self.sr.result()["result"])
+            self.fun_search_result_by_list(self.sr.result()["result"])
 
     def render_search_body(self):
         self.searchBody = QVBoxLayout()
@@ -827,7 +768,7 @@ class DroxWidget(QWidget):
             "border: none; border-radius: 2px; background-color: #EEEEEE; padding: 7.5px;"
         )
         self.searchInput.addAction(QIcon(I_Search), QLineEdit.LeadingPosition)
-        self.searchInput.returnPressed.connect(self.f_on_search_input)
+        self.searchInput.returnPressed.connect(self.fun_on_search_input)
 
         self.searchButton = QPushButton("")
         self.searchInputLine.addWidget(self.searchButton)
@@ -836,7 +777,7 @@ class DroxWidget(QWidget):
         self.searchButton.setStyleSheet(
             "border: none; border-radius: 5px; background-color: #EEEEEE; padding: 10px;"
         )
-        self.searchButton.clicked.connect(self.f_on_search_input)
+        self.searchButton.clicked.connect(self.fun_on_search_input)
 
         self.searchResult = QListWidget()
         self.searchBody.addWidget(self.searchResult)
@@ -845,7 +786,9 @@ class DroxWidget(QWidget):
         # self.searchResult.setFixedHeight(int(self.height() / 2.5))
 
         self.searchResult.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.searchResult.verticalScrollBar().valueChanged.connect(self.f_search_update)
+        self.searchResult.verticalScrollBar().valueChanged.connect(
+            self.fun_search_update
+        )
         self.searchResult.verticalScrollBar().setSingleStep(5)
         self.searchResult.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.searchResult.setStyleSheet("")
@@ -872,21 +815,21 @@ class DroxWidget(QWidget):
         self.layoutSetting.addLayout(self.Qlocations)
 
     @pyqtSlot(float)
-    def f_dl_updated(self, value):
+    def fun_dl_updated(self, value):
         self.dl_pr.setValue(int(value))
 
     @pyqtSlot(bool)
-    def f_dl_finished(self, value):
+    def fun_dl_finished(self, value):
         print(value)
 
-    def f_dl_btn_clicked(self):
+    def fun_dl_btn_clicked(self):
         from backend.youtube.downloader import Downloader
 
         try:
             if self.i_.isRunning() == False:
                 self.i_ = Downloader()
-                self.i_.updated.connect(self.f_dl_updated)
-                self.i_.finished.connect(self.f_dl_finished)
+                self.i_.updated.connect(self.fun_dl_updated)
+                self.i_.finished.connect(self.fun_dl_finished)
                 self.i_.start()
 
                 self.dl_btn.setText("Cancel")
@@ -895,8 +838,8 @@ class DroxWidget(QWidget):
                 self.dl_btn.setText("Download")
         except:
             self.i_ = Downloader()
-            self.i_.updated.connect(self.f_dl_updated)
-            self.i_.finished.connect(self.f_dl_finished)
+            self.i_.updated.connect(self.fun_dl_updated)
+            self.i_.finished.connect(self.fun_dl_finished)
             self.i_.start()
 
     def render_playlist_header(self):
@@ -922,11 +865,11 @@ class DroxWidget(QWidget):
         self.dl_box_layout.addWidget(self.dl_pr)
 
         self.dl_btn = QPushButton("Download")
-        self.dl_btn.clicked.connect(self.f_dl_btn_clicked)
+        self.dl_btn.clicked.connect(self.fun_dl_btn_clicked)
         self.dl_box_layout.addWidget(self.dl_btn)
 
         self.ch_tl_rd_mth = QPushButton("Change Window Title Render Method")
-        self.ch_tl_rd_mth.clicked.connect(self.change_title_render_method)
+        self.ch_tl_rd_mth.clicked.connect(self.fun_change_title_render_method)
         self.layoutPlaylist.addWidget(self.ch_tl_rd_mth)
 
     def render_single_header(self):
@@ -936,12 +879,23 @@ class DroxWidget(QWidget):
         self.singleAppBarText = AppBarTitle("Single")
         self.singleAppBar.addWidget(self.singleAppBarText)
 
-    def e_window_pressed(self, event: QMouseEvent):
+    def event_window_pressed(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.RightButton:
-            self.ctx = Context(event.globalPos())
-            self.ctx.show()
 
-    def e_window_released(self, event: QMouseEvent):
+            self.titlePos = self.windowTitleLayout.geometry()
+            left, top, right, bottom = (
+                0,
+                0,
+                self.titlePos.right() + self.titlePos.left(),
+                self.titlePos.bottom() + self.titlePos.top(),
+            )
+            posX, posY = event.pos().x(), event.pos().y()
+
+            if (left < posX < right) and (top < posY < bottom):
+                self.ctx = WindowContext(event.globalPos())
+                self.ctx.show()
+
+    def event_window_released(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.XButton1:
             print("Left")
             try:
@@ -1041,13 +995,14 @@ if __name__ == "__main__":
     # app.setQuitOnLastWindowClosed(False)
 
     dw = DroxWidget()
-
-    fo = FramelessObject()
     # app.installEventFilter(fo)
 
     mouse_observer = MouseObserver(dw.windowHandle())
-    mouse_observer.pressed.connect(dw.e_window_pressed)
-    mouse_observer.released.connect(dw.e_window_released)
+    mouse_observer.pressed.connect(dw.event_window_pressed)
+    mouse_observer.released.connect(dw.event_window_released)
+
+    native_style = QCommonStyle()
+    dw.setStyle(native_style)
 
     import sys
 
