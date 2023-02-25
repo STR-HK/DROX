@@ -15,6 +15,11 @@ C_LovelyWinter = P_COVER + "lovely.jpg"
 C_BlackWinter = P_COVER + "BlackWinter.jpg"
 C_HighteenWinter = P_COVER + "Highteen.jpg"
 C_SparkleWinter = P_COVER + "Sparkle.webp"
+C_GlitterWinter = P_COVER + "WinterGlitter.jpg"
+C_WatchingWinter = P_COVER + "wint_watchin.jpg"
+
+C_BlueAesthe = P_COVER + "blue_aesthe.jpg"
+C_BlueCelery = P_COVER + "BlueCelery.jpg"
 
 
 C_Heoney = P_COVER + "Heoney.jpg"

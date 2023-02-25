@@ -5,7 +5,7 @@ import binascii
 import json
 import os
 
-cachePath = "cache.json"
+cachePath = "data/cache.json"
 
 
 def load_cache() -> dict:

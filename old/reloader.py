@@ -27,7 +27,7 @@ while True:
         if size != prev_size:
             prev_size = size
 
-            f = open("terminate.txt", "w")
+            f = open("../data/terminate.txt", "w")
             f.write("1")
             f.close()
 

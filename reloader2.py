@@ -19,7 +19,7 @@ def on_modified(event):
 
         time.sleep(0.1)
 
-        open("terminate.txt", "w").write("1")
+        open("data/terminate.txt", "w").write("1")
 
     # print(f"hey buddy, {event.src_path} has been modified")
 

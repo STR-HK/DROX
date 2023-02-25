@@ -1,22 +1,14 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-
 import sys
-import os
 
-from MyPicker import invert_color, pick_color
-from MyAssets import *
-from MyYoutube import *
-
-from MyQtWidgets import *
-from MyWidgets import *
-from MyThreads import *
-from MyObjects import *
-from SvgEditor import change_color
+import DroxQt.DPushButton
 
 # ACCENT_COLOR = "#731D2C"
-from MyColors import *
+from MyDependencies.MyObjects import *
+from MyDependencies.MyQtWidgets import *
+from MyDependencies.MyThreads import *
+from MyDependencies.MyWidgets import *
+from MyDependencies.MyYoutube import *
+from MyDependencies.SvgEditor import *
 
 
 class MyPopup(QWidget):
@@ -49,23 +41,23 @@ class ContextButton(QPushButton):
     def __init__(self, *args, **kwargs):
         super(QPushButton, self).__init__(*args, **kwargs)
         self.setStyleSheet(
-            """
-        QPushButton {
+            f"""
+        QPushButton {{
             background-color: transparent;
             text-align:left;
             padding-left: 10;
             padding-right: 10;
             padding-top: 2;
             padding-bottom: 2;
-        }
-        QPushButton:hover {
-            background-color: """
-            + ACCENT_COLOR_LIGHT
-            + """;
             border: 0;
-            color: white;
+            color: {colorScheme.onBackground};
+        }}
+        QPushButton:hover {{
+            background-color: {colorScheme.primaryContainer};
+            border: 0;
+            color: {colorScheme.onBackground};
             border-radius: 5;
-        }
+        }}
         """
         )
 
@@ -81,7 +73,7 @@ class WindowContext(QWidget):
         self.ui_make_round()
 
         palatte = QPalette()
-        palatte.setColor(QPalette.Background, QColor(237, 237, 237))
+        palatte.setColor(QPalette.Background, QColor(colorScheme.background))
         self.setPalette(palatte)
 
         self.contextLayout = QVBoxLayout()
@@ -107,7 +99,7 @@ class WindowContext(QWidget):
         line = QWidget()
         line.setFixedHeight(1)
         line.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        line.setStyleSheet("background-color: lightgray")
+        line.setStyleSheet(f"background-color: {colorScheme.surfaceVariant}")
         self.contextLayout.addWidget(line)
 
         self.close = ContextButton("Close")
@@ -228,19 +220,20 @@ class DroxWidget(QWidget):
         self.move(0, 0)
 
     def ui_init_window(self):
-        open("terminate.txt", "w").write("0")
+        open("data/terminate.txt", "w").write("0")
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.ui_terminate)
-        self.timer.start(500)
+        self.timer.start(100)
 
-        x, y = open("pos.txt", "r").read().split(", ")
+        x, y = open("data/pos.txt", "r").read().split(", ")
         self.move(int(x), int(y))
 
         self.setWindowTitle("Drox")
-        self.setWindowIcon(QIcon("icon.svg"))
-        width = 360
-        self.window_size = QSize(width, int(width * 18 / 9))
+        self.setWindowIcon(QIcon("icon/icon.svg"))
+        width = 480
+        # self.window_size = QSize(width, int(width * 18 / 9))
+        self.window_size = QSize(width, int(width * 16 / 9))
         self.setFixedSize(self.window_size)
         # self.resize(self.window_size)
         self.show()
@@ -307,7 +300,7 @@ class DroxWidget(QWidget):
         line = QWidget()
         line.setFixedHeight(1)
         line.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        line.setStyleSheet("background-color: lightgray")
+        line.setStyleSheet(f"background-color: {colorScheme.outline}")
         self.masterLayout.addWidget(line)
 
         self.masterLayout.addLayout(self.masterBody)
@@ -332,7 +325,7 @@ class DroxWidget(QWidget):
         self.layoutSearch = QVBoxLayout()
         self.layoutSetting = QVBoxLayout()
 
-        self.windowTitleRenderMethod = "macos"
+        self.windowTitleRenderMethod = "windows"
         self.render_title()
         self.render_footer()
 
@@ -348,22 +341,24 @@ class DroxWidget(QWidget):
 
         self.render_location_viewer()
 
-        # self.ui_change_layout(
-        #     self.on_nav_search_clicked, self.layoutSearch, self.nav_search
-        # )
-
         self.ui_change_layout(
-            self.on_nav_playlist_clicked, self.layoutPlaylist, self.nav_playlist
+            self.on_nav_search_clicked, self.layoutSearch, self.nav_search
         )
+
+        # self.ui_change_layout(
+        #     self.on_nav_playlist_clicked, self.layoutPlaylist, self.nav_playlist
+        # )
 
         # self.ui_change_layout(self.on_nav_main_clicked, self.layoutMain, self.nav_main)
 
     def ui_terminate(self):
-        if open("terminate.txt", "r").read() == "1":
-            open("terminate.txt", "w").write("0")
+        if open("data/terminate.txt", "r").read() == "1":
+            open("data/terminate.txt", "w").write("0")
             os.execl(sys.executable, sys.executable, '"{}"'.format(*sys.argv))
-        open("pos.txt", "w").write(f"{self.pos().x()}, {self.pos().y()}")
-        open("size.txt", "w").write(f"{self.size().width()}, {self.size().height()}")
+        open("data/pos.txt", "w").write(f"{self.pos().x()}, {self.pos().y()}")
+        open("data/size.txt", "w").write(
+            f"{self.size().width()}, {self.size().height()}"
+        )
 
     def win_minimize(self):
         self.showMinimized()
@@ -372,13 +367,17 @@ class DroxWidget(QWidget):
         if self.isMaximized():
             self.showNormal()
             if self.windowTitleRenderMethod == "windows":
-                self.btn_maximize.setIcon(QIcon(I_Maximize))
+                self.btn_maximize.setIcon(
+                    QIcon(change_icon_color(I_Maximize, colorScheme.onBackground))
+                )
             elif self.windowTitleRenderMethod == "macos":
                 pass
         else:
             self.showMaximized()
             if self.windowTitleRenderMethod == "windows":
-                self.btn_maximize.setIcon(QIcon(I_Restore))
+                self.btn_maximize.setIcon(
+                    QIcon(change_icon_color(I_Restore, colorScheme.onBackground))
+                )
             elif self.windowTitleRenderMethod == "macos":
                 pass
 
@@ -432,8 +431,8 @@ class DroxWidget(QWidget):
         self.playlistMenu = MainMenuWidget()
         self.playlistMenu.setMainText("PlayList")
         self.playlistMenu.setSubText("0 playlist")
-        self.playlistMenu.setTextColor("white")
-        self.playlistMenu.setIcon(C_SparkleWinter)
+        # self.playlistMenu.setTextColor("white")
+        self.playlistMenu.setIcon(C_WatchingWinter)
         self.playlistMenu.clicked.connect(self.on_nav_playlist_clicked)
         # self.playlistMenu.mouseReleaseEvent = self.on_nav_playlist_clicked
         self.menu.addWidget(self.playlistMenu)
@@ -441,8 +440,8 @@ class DroxWidget(QWidget):
         self.singleMenu = MainMenuWidget()
         self.singleMenu.setMainText("Single")
         self.singleMenu.setSubText("0 song")
-        self.singleMenu.setTextColor("white")
-        self.singleMenu.setIcon(C_HighteenWinter)
+        # self.singleMenu.setTextColor("white")
+        self.singleMenu.setIcon(C_SparkleWinter)
         self.singleMenu.clicked.connect(self.on_nav_single_clicked)
         self.menu.addWidget(self.singleMenu)
 
@@ -450,7 +449,7 @@ class DroxWidget(QWidget):
             self.playlistMenu.setIcon(C_init)
             self.singleMenu.setIcon(C_dust)
 
-        normalize()
+        # normalize()
 
     def fun_change_title_render_method(self):
         if self.windowTitleRenderMethod == "macos":
@@ -466,7 +465,7 @@ class DroxWidget(QWidget):
     def render_title(self):
         # self.windowTitleLayout.setContentsMargins(30, 15, 30, 15)
         # self.windowTitleLayout.setContentsMargins(20, 15, 20, 0) //선 없을 떄
-        self.windowTitleLayout.setContentsMargins(20, 15, 20, 5)
+        self.windowTitleLayout.setContentsMargins(20, 10, 20, 0)
         self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         # self.windowTitleLayout.
 
@@ -569,13 +568,19 @@ class DroxWidget(QWidget):
                 self.windowTitleLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
                 self.btn_minimize = QPushButton()
-                self.btn_minimize.setIcon(QIcon(I_Minimize))
+                self.btn_minimize.setIcon(
+                    QIcon(change_icon_color(I_Minimize, colorScheme.onBackground))
+                )
                 self.btn_minimize.clicked.connect(self.win_minimize)
                 self.btn_maximize = QPushButton()
-                self.btn_maximize.setIcon(QIcon(I_Maximize))
+                self.btn_maximize.setIcon(
+                    QIcon(change_icon_color(I_Maximize, colorScheme.onBackground))
+                )
                 self.btn_maximize.clicked.connect(self.win_maximize)
                 self.btn_close = QPushButton()
-                self.btn_close.setIcon(QIcon(I_Close))
+                self.btn_close.setIcon(
+                    QIcon(change_icon_color(I_Close, colorScheme.onBackground))
+                )
                 self.btn_close.clicked.connect(self.win_close)
 
                 self.window_btns = [
@@ -590,10 +595,10 @@ class DroxWidget(QWidget):
                     button.setFixedSize(43, 28)
                     button.setIconSize(QSize(15, 15))
                     button.setStyleSheet(
-                        """
-                        QPushButton { background-color: rgba(0, 0, 0, 0.0); border: 0px; }
-                        QPushButton:hover { background-color: rgba(0, 0, 0, 0.1); }
-                        QPushButton:pressed { background-color: rgba(0, 0, 0, 0.2); }
+                        f"""
+                        QPushButton {{ background-color: rgba(0, 0, 0, 0.0); border: 0px; }}
+                        QPushButton:hover {{ background-color: rgba(0, 0, 0, 0.1); }}
+                        QPushButton:pressed {{ background-color: rgba(0, 0, 0, 0.2); }}
                         """
                     )
 
@@ -702,12 +707,12 @@ class DroxWidget(QWidget):
 
         item.setToolTip(line1.text())
         line1.setWordWrap(True)
-        line1.setStyleSheet("font-size: 13px;")
+        line1.setStyleSheet(f"font-size: 13px; color: {colorScheme.onSurface}")
 
         line2 = QLabel(subtext)
         line2cont.addWidget(line2)
         line2.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        line2.setStyleSheet("font-size: 10px; color: #999;")
+        line2.setStyleSheet(f"font-size: 10px; color: {colorScheme.onSurfaceVariant};")
 
         tag = QLabel("LIVE NOW")
         tag.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
@@ -748,51 +753,153 @@ class DroxWidget(QWidget):
 
     def fun_search_update(self, value):
         if value == self.searchResult.verticalScrollBar().maximum():
-            self.sr.next()
-            self.fun_search_result_by_list(self.sr.result()["result"])
+            try:
+                self.sr.next()
+                self.fun_search_result_by_list(self.sr.result()["result"])
+            except:
+                print("End")
 
     def render_search_body(self):
         self.searchBody = QVBoxLayout()
+        # self.searchBody.setSizeConstraint/
         self.layoutSearch.addLayout(self.searchBody)
-        self.searchBody.setContentsMargins(5, 5, 5, 5)
+        self.searchBody.setContentsMargins(7, 7, 7, 7)
 
         self.searchInputLine = QHBoxLayout()
-        self.searchInputLine.setContentsMargins(2, 2, 2, 2)
+        # self.searchInputLine.setContentsMargins(2, 2, 2, 2)
 
         self.searchBody.addLayout(self.searchInputLine)
 
-        self.searchInput = QLineEdit("lofi")
+        self.searchInput = QLineEdit("「무엇을 해도 잘 되지 않아」 - meiyo 불러보았다 (cover by 영위)")
         self.searchInputLine.addWidget(self.searchInput)
         self.searchInput.setPlaceholderText("Search")
         self.searchInput.setStyleSheet(
-            "border: none; border-radius: 2px; background-color: #EEEEEE; padding: 7.5px;"
+            f"border: none; border-radius: 2px; background-color: {colorScheme.surfaceVariant}; padding: 7.5px; color: {colorScheme.onSurfaceVariant};"
         )
-        self.searchInput.addAction(QIcon(I_Search), QLineEdit.LeadingPosition)
+        self.searchInput.addAction(
+            QIcon(change_icon_color(I_Search, colorScheme.onSurfaceVariant)),
+            QLineEdit.LeadingPosition,
+        )
         self.searchInput.returnPressed.connect(self.fun_on_search_input)
 
         self.searchButton = QPushButton("")
         self.searchInputLine.addWidget(self.searchButton)
-        self.searchButton.setIcon(QIcon(I_Search))
+        self.searchButton.setIcon(
+            QIcon(change_icon_color(I_Search, colorScheme.onSecondaryContainer))
+        )
         self.searchButton.setCursor(Qt.PointingHandCursor)
         self.searchButton.setStyleSheet(
-            "border: none; border-radius: 5px; background-color: #EEEEEE; padding: 10px;"
+            f"border: none; border-radius: 5px; background-color: {colorScheme.secondaryContainer}; padding: 10px;"
         )
         self.searchButton.clicked.connect(self.fun_on_search_input)
 
         self.searchResult = QListWidget()
         self.searchBody.addWidget(self.searchResult)
-        self.searchResult.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.searchBody.setStretchFactor(self.searchResult, 2)
+
+        # self.searchResult.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.searchResult.setFixedHeight(450)
         # self.searchResult.setFixedHeight(int(self.height() / 2.5))
-        # self.searchResult.setFixedHeight(int(self.height() / 2.5))
+
+        self.searchButton.click()
 
         self.searchResult.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.searchResult.verticalScrollBar().valueChanged.connect(
             self.fun_search_update
         )
         self.searchResult.verticalScrollBar().setSingleStep(5)
-        self.searchResult.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-        self.searchResult.setStyleSheet("")
+        self.searchResult.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.searchResult.setStyleSheet(
+            f"""
+            QListWidget {{
+                outline: none;
+                background-color: {colorScheme.surface};
+                border: 0;
+                border-radius: 3px;
+                color: {colorScheme.onSurface};
+            }}
+
+            QListWidget::item {{
+                border-bottom: 1px solid {colorScheme.surfaceVariant};
+                background-color: {colorScheme.surface};
+                color: {colorScheme.onSurface};
+                selection-background-color: rgb(0, 0, 0);
+                selection-color: rgb(170, 255, 0);
+            }}
+
+            QListWidget::item:selected {{
+                background-color: {colorScheme.surfaceVariant};
+                color: {colorScheme.onSurfaceVariant};
+            }}
+
+            QListWidget::item:hover {{
+                background-color: {colorScheme.surfaceVariant};
+                color: {colorScheme.onSurfaceVariant};
+            }}
+
+            QListWidget::item:selected:active {{
+                background-color: {colorScheme.surfaceVariant};
+            }}
+
+            QScrollBar:vertical {{
+                background: {colorScheme.surfaceVariant};
+                border-top-right-radius: 2px;
+                border-bottom-right-radius: 2px;
+                width: 7px;
+                margin: 0px;
+            }}
+
+            QScrollBar::handle:vertical {{
+                background-color: {colorScheme.primary};
+                border-radius: 3px;
+            }}
+
+            QScrollBar::add-line:vertical {{
+                background: none;
+                height: 0px;
+                subcontrol-position: right;
+                subcontrol-origin: margin;
+            }}
+
+            QScrollBar::sub-line:vertical {{
+                background: none;
+                height: 0px;
+                subcontrol-position: left;
+                subcontrol-origin: margin;
+            }}
+
+            QScrollBar::sub-line:vertical:hover, QScrollBar::sub-line:vertical:on
+            {{
+                height: 10px;
+                width: 10px;
+                subcontrol-position: top;
+                subcontrol-origin: margin;
+            }}
+        
+            QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on
+            {{
+                height: 10px;
+                width: 10px;
+                subcontrol-position: bottom;
+                subcontrol-origin: margin;
+            }}
+
+            QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical
+            {{
+                background: none;
+            }}
+
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+            {{
+                background: none;
+            }}
+             """
+        )
         self.searchResult.setIconSize(QSize(55, 55))
+
+        cont = QWidget()
+        cont.setStyleSheet("background: black")
+        self.searchBody.addWidget(cont)
 
         # self.Fixed = QPushButton("Fixed")
         # self.Fixed.clicked.connect(lambda x: self.cc("Fixed"))
@@ -820,7 +927,8 @@ class DroxWidget(QWidget):
 
     @pyqtSlot(bool)
     def fun_dl_finished(self, value):
-        print(value)
+        # print(value)
+        pass
 
     def fun_dl_btn_clicked(self):
         from backend.youtube.downloader import Downloader
@@ -864,11 +972,13 @@ class DroxWidget(QWidget):
         # self.dl_pr.setTextVisible(False)
         self.dl_box_layout.addWidget(self.dl_pr)
 
-        self.dl_btn = QPushButton("Download")
+        self.dl_btn = DroxQt.DPushButton.DPushButton("Download")
         self.dl_btn.clicked.connect(self.fun_dl_btn_clicked)
         self.dl_box_layout.addWidget(self.dl_btn)
 
-        self.ch_tl_rd_mth = QPushButton("Change Window Title Render Method")
+        self.ch_tl_rd_mth = DroxQt.DPushButton.DPushButton(
+            "Change Window Title Render Method"
+        )
         self.ch_tl_rd_mth.clicked.connect(self.fun_change_title_render_method)
         self.layoutPlaylist.addWidget(self.ch_tl_rd_mth)
 
@@ -897,9 +1007,9 @@ class DroxWidget(QWidget):
 
     def event_window_released(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.XButton1:
-            print("Left")
+            # print("Left")
             try:
-                print(self.location_prev, self.location_next)
+                # print(self.location_prev, self.location_next)
                 self.Qlocation_next.addItem(str(self.location_prev[-1]))
                 self.location_next.append(self.location_prev[-1])
                 self.Qlocation_prev.takeItem(self.Qlocation_prev.count() - 1)
@@ -928,15 +1038,12 @@ class DroxWidget(QWidget):
             except:
                 pass
         elif event.button() == Qt.MouseButton.RightButton:
-            # self.doit()
-            # print(event.pos())
 
-            # print(event.)
             pass
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self.start = self.mapToGlobal(event.pos())
+            self.start = event.globalPos()
             self.pressing = True
 
             self.titlePos = self.windowTitleLayout.geometry()
@@ -958,13 +1065,11 @@ class DroxWidget(QWidget):
     def mouseMoveEvent(self, event):
         if self.drag:
             if self.pressing:
-                self.end = self.mapToGlobal(event.pos())
+                self.end = event.globalPos()
                 self.movement = self.end - self.start
-                self.setGeometry(
+                self.move(
                     self.mapToGlobal(self.movement).x(),
                     self.mapToGlobal(self.movement).y(),
-                    self.width(),
-                    self.height(),
                 )
                 self.start = self.end
 
@@ -987,7 +1092,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     palatte = QPalette()
-    palatte.setColor(QPalette.Background, QColor(255, 255, 255))
+    palatte.setColor(QPalette.Background, QColor(colorScheme.background))
     # palatte.setColor(QPalette.Background, QColor(169, 98, 95))
     app.setPalette(palatte)
     app.setFont(QFont("Pretendard", 10))

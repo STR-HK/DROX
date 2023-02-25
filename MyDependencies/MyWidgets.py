@@ -4,10 +4,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 
-from MyPicker import *
-import SvgEditor
+from MyDependencies.MyPicker import *
+import MyDependencies.SvgEditor
 
-from MyColors import *
+from MyDependencies.MyColors import *
 
 
 class AppBar(QHBoxLayout):
@@ -23,7 +23,7 @@ class AppBarTitle(QLabel):
         self.font = QFont("Pretendard", 20)
         self.setFont(self.font)
         self.setStyleSheet(
-            "font-size: 28px; font-weight: 600; color: {};".format("black")
+            "font-size: 28px; font-weight: 600; color: {};".format(colorScheme.onBackground)
         )
         self.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -101,7 +101,7 @@ class NeuNavButton(QWidget):
         if not hasattr(self, "icon_"):
             self.icon_ = icon
             pix = QPixmap()
-            pix.loadFromData(SvgEditor.change_color(self.icon_, "gray"))
+            pix.loadFromData(MyDependencies.SvgEditor.change_color(self.icon_, "gray"))
 
             self.icon.setPixmap(pix)
 
@@ -121,14 +121,14 @@ class NeuNavButton(QWidget):
         if hasattr(self, "invert"):
             if self.inverted == False:
                 pix = QPixmap()
-                pix.loadFromData(SvgEditor.change_color(self.icon_, ACCENT_COLOR))
+                pix.loadFromData(MyDependencies.SvgEditor.change_color(self.icon_, colorScheme.primary))
                 self.setIcon(pix)
                 self.inverted = True
 
-                self.setTextColor(ACCENT_COLOR)
+                self.setTextColor(colorScheme.primary)
             else:
                 pix = QPixmap()
-                pix.loadFromData(SvgEditor.change_color(self.icon_, "gray"))
+                pix.loadFromData(MyDependencies.SvgEditor.change_color(self.icon_, "gray"))
                 self.setIcon(pix)
                 self.inverted = False
 

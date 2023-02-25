@@ -2,15 +2,12 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from io import BytesIO
-from PIL import Image
-import requests
 import random
 import sys
 import os
 
-from MyPicker import pick_color
-from MyAssets import *
+from MyDependencies.MyPicker import pick_color
+from MyDependencies.MyAssets import *
 from MyYt import *
 
 

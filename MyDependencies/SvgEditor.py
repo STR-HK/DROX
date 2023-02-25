@@ -1,11 +1,7 @@
+from PyQt5.QtGui import QPixmap
 from lxml import etree
 
-import MyAssets
-
-from PyQt5.QtWidgets import *
-import sys
-from PyQt5.QtGui import *
-
+import MyDependencies
 
 def change_color(path, color):
     tree = etree.parse(path)
@@ -16,3 +12,8 @@ def change_color(path, color):
     # tree.write(path, pretty_print=True)
     xml = etree.tostring(root, pretty_print=True)
     return xml
+
+def change_icon_color(icon, color):
+    pix = QPixmap()
+    pix.loadFromData(MyDependencies.SvgEditor.change_color(icon, color))
+    return pix

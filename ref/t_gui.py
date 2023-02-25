@@ -1,27 +1,16 @@
-from ast import Pass
 import io
-from tkinter.messagebox import NO
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import sys
-import os
-from numpy import maximum
 
-from requests import request
 import requests
 
-from MyAssets import *
-from MyPicker import pick_color
 from MyYt import *
 
-from PIL import Image, ImageQt, ImageDraw
+from PIL import Image
 from io import BytesIO
-
-import PIL.ImageOps
-
-import random
 
 
 class MouseObserver(QObject):

@@ -1,4 +1,3 @@
-import MyPicker
 import seaborn as sns
 
 l = []

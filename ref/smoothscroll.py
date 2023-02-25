@@ -1,69 +1,52 @@
-# importing libraries
-from PyQt5.QtWidgets import *
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
 import sys
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 
-class Window(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class Window(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
 
-        # setting title
-        self.setWindowTitle("Python ")
+        self.setWindowTitle("Scrolling QTableWidget smoothly BY MOUSE WHEEL")
 
-        # setting geometry
-        self.setGeometry(100, 100, 500, 400)
+        label = QLabel("singleStep:")
+        self.spinbox = QSpinBox()
+        self.spinbox.setValue(1)
+        self.spinbox.setMinimum(1)
+        self.spinbox.setMaximum(200)
+        self.spinbox.valueChanged.connect(self.on_value_changed)
 
-        # calling method
-        self.UiComponents()
+        self.widget = QTableWidget(100, 5)
 
-        # showing all the widgets
-        self.show()
+        for i in range(100):
+            for j in range(5):
+                self.widget.setItem(i, j, QTableWidgetItem(str(i + j)))
 
-    # method for components
-    def UiComponents(self):
+        self.widget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        # self.widget.verticalScrollBar().setSingleStep(1)
+        self.set_single_step()
 
-        # creating a QListWidget
-        list_widget = QListWidget(self)
+        spinbox_layout = QHBoxLayout()
+        spinbox_layout.addStretch()
+        spinbox_layout.addWidget(label)
+        spinbox_layout.addWidget(self.spinbox)
 
-        # setting geometry to it
-        list_widget.setGeometry(50, 70, 150, 80)
+        layout = QVBoxLayout()
+        layout.addLayout(spinbox_layout)
+        layout.addWidget(self.widget)
+        self.setLayout(layout)
 
-        # list widget items
-        item1 = QListWidgetItem("PyQt5 Geeks for Geeks")
-        item2 = QListWidgetItem("B")
-        item3 = QListWidgetItem("C")
-        item4 = QListWidgetItem("D")
+    def on_value_changed(self, step):
+        self.set_single_step()
 
-        # adding items to the list widget
-        list_widget.addItem(item1)
-        list_widget.addItem(item2)
-        list_widget.addItem(item3)
-        list_widget.addItem(item4)
-
-        # setting vertical scroll mode
-        list_widget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-
-        # resetting horizontal scroll mode
-        list_widget.resetHorizontalScrollMode()
-
-        # creating a label
-        label = QLabel("GeesforGeeks", self)
-
-        # setting geometry to the label
-        label.setGeometry(230, 80, 280, 80)
-
-        # making label multi line
-        label.setWordWrap(True)
+    def set_single_step(self):
+        self.widget.verticalScrollBar().setSingleStep(self.spinbox.value())
 
 
-# create pyqt5 app
-App = QApplication(sys.argv)
-
-# create the instance of our Window
-window = Window()
-
-# start the app
-sys.exit(App.exec())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = Window()
+    window.resize(800, 600)
+    window.show()
+    sys.exit(app.exec())
