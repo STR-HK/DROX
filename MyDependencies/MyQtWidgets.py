@@ -1,6 +1,5 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 
 class ButtonHoverWatcher(QObject):
@@ -49,6 +48,29 @@ class ButtonHoverWatcher(QObject):
 #             print("click")
 
 
+class QPushButton(QPushButton):
+    def __init__(self):
+        super().__init__()
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedHeight(40)
+        self.setMinimumHeight(40)
+        # self.setStyleSheet(f"""
+        #     QPushButton {{
+        #         background-color: {colorScheme.surface};
+        #         color: {colorScheme.primary};
+        #         border-radius: 20px;
+        #         font-size: 12px;
+        #         font-weight: 500;
+        #         text-align: center;
+        #         padding: 0 24px 0 24px;
+        #         border: none;
+        #     }}
+        #     QPushButton:hover {{
+        #         background-color: {colorScheme.background};
+        #         color: {colorScheme.surface};
+        #     }}
+        # """)
+        self.setStyleSheet('bakcground-color: red;')
 class QVBoxLayout(QVBoxLayout):
     def __init__(self, *args, **kwargs):
         super(QVBoxLayout, self).__init__(*args, **kwargs)

@@ -1,13 +1,12 @@
-from PyQt5.QtWidgets import *
+from io import BytesIO
+
 from PyQt5.QtCore import *
-
 from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
-
-from MyDependencies.MyPicker import *
 import MyDependencies.SvgEditor
-
 from MyDependencies.MyColors import *
+from MyDependencies.MyPicker import *
 
 
 class AppBar(QHBoxLayout):
@@ -200,6 +199,7 @@ class MainMenuWidget(QGroupBox):
         self.setContentsMargins(0, 0, 0, 0)
 
         self.Layout_M = QVBoxLayout()
+        # self.Layout_M.setSpacing(0)
         self.setLayout(self.Layout_M)
         self.Layout_M.setContentsMargins(0, 0, 0, 10)
 
@@ -208,15 +208,22 @@ class MainMenuWidget(QGroupBox):
         self.Image.setRadius(self.radius)
         self.Image.setScaledContents(True)
 
+        self.Layout_MM = QVBoxLayout()
+        self.Layout_MM.setSpacing(0)
+        self.Layout_M.addLayout(self.Layout_MM)
+        self.Layout_MM.setContentsMargins(0, 3, 0, 0)
+
         self.MainText = QLabel()
-        self.Layout_M.addWidget(self.MainText)
+        self.Layout_MM.addWidget(self.MainText)
         self.MainText.setText("MainText")
         self.MainText.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.MainText.setStyleSheet("font-size: 1rem; font-weight: bold;")
+        self.MainText.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         self.SubText = QLabel("SubText")
-        self.Layout_M.addWidget(self.SubText)
+        self.Layout_MM.addWidget(self.SubText)
         self.SubText.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.SubText.setStyleSheet("font-size: 10px;")
+
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -242,6 +249,41 @@ class MainMenuWidget(QGroupBox):
         self.setStyleSheet(self.styleSheet() + "background-color: {};".format(color))
 
     def setIcon(self, icon):
-        self.Image.setIcon(icon)
+        try:
+            thumbImg = Image.open(icon)
+            thumbImg = thumbImg.convert("RGBA")
+            if (thumbImg.width > thumbImg.height):
+                thumbImg = thumbImg.crop(
+                    (
+                        int((thumbImg.width - thumbImg.height) / 2),
+                        0,
+                        int((thumbImg.width - thumbImg.height) / 2) + thumbImg.height,
+                        thumbImg.height,
+                    )
+                )
+            else:
+                thumbImg = thumbImg.crop(
+                    (
+                        0,
+                        int((thumbImg.height - thumbImg.width) / 2),
+                        thumbImg.width,
+                        int((thumbImg.height - thumbImg.width) / 2) + thumbImg.width,
+
+                    )
+                )
+            # thumbImg.show()
+
+            imgByte = BytesIO()
+            thumbImg.save(imgByte, format="PNG")
+            qpix = QPixmap()
+            qpix.loadFromData(imgByte.getvalue())
+            # self.item.setIcon(QIcon(qpix))
+            self.Image._pixmap = qpix
+            # self.Image._pixmap = QPixmap(icon)
+            self.Image.updateImg()
+
+        except Exception as e:
+            print(e)
+        # self.Image.setIcon(icon)
         self.setBgColor(pick_color(icon))
         self.setTextColor(invert_color(HEX_VALUE=pick_color(icon), BLACK_WHITE=True))

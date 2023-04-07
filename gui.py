@@ -1,7 +1,6 @@
 import sys
 
 import DroxQt.DPushButton
-
 # ACCENT_COLOR = "#731D2C"
 from MyDependencies.MyObjects import *
 from MyDependencies.MyQtWidgets import *
@@ -53,7 +52,7 @@ class ContextButton(QPushButton):
             color: {colorScheme.onBackground};
         }}
         QPushButton:hover {{
-            background-color: {colorScheme.primaryContainer};
+            background-color: {colorScheme.secondaryContainer};
             border: 0;
             color: {colorScheme.onBackground};
             border-radius: 5;
@@ -430,16 +429,15 @@ class DroxWidget(QWidget):
 
         self.playlistMenu = MainMenuWidget()
         self.playlistMenu.setMainText("PlayList")
-        self.playlistMenu.setSubText("0 playlist")
-        # self.playlistMenu.setTextColor("white")
-        self.playlistMenu.setIcon(C_WatchingWinter)
+        self.playlistMenu.setSubText("0 playlists")
+        self.playlistMenu.setIcon(C_BlueCelery)
         self.playlistMenu.clicked.connect(self.on_nav_playlist_clicked)
         # self.playlistMenu.mouseReleaseEvent = self.on_nav_playlist_clicked
         self.menu.addWidget(self.playlistMenu)
 
         self.singleMenu = MainMenuWidget()
-        self.singleMenu.setMainText("Single")
-        self.singleMenu.setSubText("0 song")
+        self.singleMenu.setMainText("Musica")
+        self.singleMenu.setSubText("0 songs")
         # self.singleMenu.setTextColor("white")
         self.singleMenu.setIcon(C_SparkleWinter)
         self.singleMenu.clicked.connect(self.on_nav_single_clicked)
@@ -673,9 +671,13 @@ class DroxWidget(QWidget):
 
         duration = entry["duration"]
 
+
         item = QListWidgetItem()
         item.setIcon(QIcon(I_Hourglass))
         item.setSizeHint(QSize(0, 70))
+
+        # item.itemEntered.connect(lambda item: print(f"Hovering over {item.toolTip()}"))
+        # item.itemExited.connect(lambda item: print(f"Stopped hovering over {item.toolTip()}"))
 
         thread = LazyIcon(
             self.searchResult,
@@ -976,7 +978,7 @@ class DroxWidget(QWidget):
         self.dl_btn.clicked.connect(self.fun_dl_btn_clicked)
         self.dl_box_layout.addWidget(self.dl_btn)
 
-        self.ch_tl_rd_mth = DroxQt.DPushButton.DPushButton(
+        self.ch_tl_rd_mth = QPushButton(
             "Change Window Title Render Method"
         )
         self.ch_tl_rd_mth.clicked.connect(self.fun_change_title_render_method)
